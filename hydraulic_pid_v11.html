@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hydraulic P&ID v11</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0c0e;--bg2:#111318;--bg3:#181b20;--bg4:#1e2228;
+  --brd:#252930;--brd2:#2e343d;
+  --txt:#c8cdd6;--txt2:#7a8494;--txt3:#444c58;
+  --blue:#3b82f6;--blue2:#1d4ed8;--blue-dim:#1a2d4a;
+  --green:#22c55e;--green-dim:#0d2818;
+  --red:#ef4444;--red-dim:#2a0d0d;
+  --orange:#f97316;--orange-dim:#2a1200;
+  --yellow:#eab308;--yellow-dim:#221a00;
+  --purple:#a78bfa;--purple-dim:#1e1535;
+}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;font-size:12px}
+#app{display:flex;flex-direction:column;height:700px;border:1px solid var(--brd);border-radius:10px;overflow:hidden;background:var(--bg)}
+
+/* ═══ TOP TOOLBAR ═══ */
+#bar{display:flex;align-items:center;gap:2px;padding:5px 10px;border-bottom:1px solid var(--brd);background:var(--bg2);flex-shrink:0;flex-wrap:wrap}
+.tb-group{display:flex;align-items:center;gap:2px;padding:0 6px;border-right:1px solid var(--brd);margin-right:2px}
+.tb-group:last-child{border-right:none;margin-right:0}
+.tb{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;font-size:11px;border:1px solid var(--brd);border-radius:6px;background:var(--bg3);color:var(--txt2);cursor:pointer;user-select:none;white-space:nowrap;transition:all .15s;font-weight:500}
+.tb:hover{background:var(--bg4);color:var(--txt);border-color:var(--brd2)}
+.tb.on{background:var(--blue-dim);border-color:var(--blue);color:#93c5fd}
+.tb.red{color:#f87171;border-color:#3a1515}.tb.red:hover{background:var(--red-dim)}
+.tb.calc{background:linear-gradient(135deg,#1a3a6e,#1e2d5a);color:#60a5fa;border-color:var(--blue);font-weight:600;letter-spacing:.03em}
+.tb.calc:hover{background:linear-gradient(135deg,#1f4480,#2534a0);color:#93c5fd}
+.tb.undo{color:var(--purple);border-color:#3a2a5a}.tb.undo:hover{background:var(--purple-dim)}
+.tb.pdf{color:#fb923c;border-color:#3a2000}.tb.pdf:hover{background:var(--orange-dim)}
+.tb-icon{font-size:13px;line-height:1}
+#mtag{font-size:10px;color:var(--txt3);margin-left:4px;letter-spacing:.04em}
+
+/* ═══ BODY ═══ */
+#body{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* ═══ LIBRARY ═══ */
+#lib{width:92px;border-right:1px solid var(--brd);background:var(--bg2);overflow-y:auto;padding:8px 6px;flex-shrink:0;display:flex;flex-direction:column;gap:0}
+.lib-group{margin-bottom:8px}
+.lib-group-header{display:flex;align-items:center;justify-content:space-between;font-size:8.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;padding:2px 3px;cursor:pointer;border-radius:3px;user-select:none}
+.lib-group-header:hover{color:var(--txt2)}
+.lib-group-header .arr{font-size:8px;transition:transform .15s}
+.lib-group.collapsed .arr{transform:rotate(-90deg)}
+.lib-group.collapsed .lib-group-items{display:none}
+.li{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px 5px;border:1px solid var(--brd);border-radius:7px;cursor:grab;margin-bottom:4px;background:var(--bg3);user-select:none;transition:all .15s;position:relative}
+.li:hover{border-color:var(--blue);background:var(--blue-dim);transform:translateY(-1px);box-shadow:0 3px 12px rgba(59,130,246,.15)}
+.li:hover span{color:#93c5fd}
+.li span{font-size:8px;color:var(--txt3);text-align:center;line-height:1.3;margin-top:1px}
+.li .type-dot{position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%}
+
+/* ═══ CANVAS ═══ */
+#cvwrap{flex:1;position:relative;overflow:hidden;background:var(--bg);cursor:default}
+#cv{position:absolute;top:0;left:0}
+#legends{position:absolute;top:12px;left:12px;background:rgba(8,9,12,.93);border:1px solid var(--brd);border-radius:7px;padding:8px 11px;font-size:9px;pointer-events:none}
+.leg-hd{font-size:8px;font-weight:600;color:var(--txt3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.leg-row{display:flex;align-items:center;gap:7px;margin-bottom:4px;color:var(--txt3)}
+.leg-row:last-child{margin-bottom:0}
+.leg-line{width:22px;height:3px;border-radius:2px;flex-shrink:0}
+#zctrl{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:3px}
+.zb{width:28px;height:28px;border:1px solid var(--brd);border-radius:6px;background:var(--bg3);color:var(--txt3);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.zb:hover{background:var(--bg4);color:var(--txt);border-color:var(--brd2)}
+
+/* selection box */
+#sel-box{position:absolute;pointer-events:none;border:1px dashed var(--blue);background:rgba(59,130,246,.07);display:none;border-radius:2px}
+
+/* ═══ RIGHT PANEL ═══ */
+#rp{width:230px;border-left:1px solid var(--brd);display:flex;flex-direction:column;background:var(--bg2);flex-shrink:0;overflow:hidden}
+#rp-props{flex:0 0 auto;overflow-y:auto;padding:12px;border-bottom:1px solid var(--brd);max-height:360px}
+#rp-results{flex:1;overflow-y:auto;padding:12px;display:none}
+#rp-bot{padding:10px 12px;background:var(--bg3);flex-shrink:0;border-top:1px solid var(--brd)}
+.stit{font-size:8.5px;font-weight:600;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.fld{margin-bottom:7px}.fld label{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);margin-bottom:3px}
+.fld input,.fld select{width:100%;padding:4px 8px;font-size:10.5px;border:1px solid var(--brd);border-radius:5px;background:var(--bg3);color:var(--txt);outline:none;transition:border-color .12s}
+.fld input:focus{border-color:var(--blue)}
+.fld select:focus{border-color:var(--blue)}
+.of{border-color:var(--green-dim)!important;background:#020c06!important;color:var(--green)!important;font-weight:500;cursor:default}
+.wf{border-color:var(--yellow-dim)!important;background:#110e00!important;color:var(--yellow)!important;font-weight:500}
+.uf{border-color:#3a2500!important;background:#100900!important;color:#fb923c!important;font-style:italic}
+.urow{display:flex;gap:5px}.urow .fld{flex:1}
+.xb{width:100%;padding:4px 8px;font-size:10.5px;background:transparent;border-radius:5px;cursor:pointer;margin-top:4px;border:1px solid var(--brd);color:var(--txt3);transition:all .12s;font-weight:500}
+.xb:hover{background:var(--bg4);color:var(--txt)}
+.xb.r{color:#f87171;border-color:#3a1515}.xb.r:hover{background:var(--red-dim)}
+.xb.g{color:var(--green);border-color:#1a4a1a;background:var(--green-dim)}.xb.g:hover{background:#102010}
+.rr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--brd)}
+.rr:last-child{border-bottom:none}
+.rl{font-size:9px;color:var(--txt3)}.rv{font-size:10px;font-weight:500;color:var(--txt2)}
+.rv.ok{color:var(--green)}.rv.w{color:var(--yellow)}.rv.er{color:var(--red)}.rv.i{color:#60a5fa}.rv.v{color:var(--purple)}
+.bdg{display:inline-block;padding:2px 9px;border-radius:5px;font-size:9px;font-weight:700}
+.bdg.ok{background:var(--green-dim);color:var(--green);border:1px solid #1a4a1a}
+.bdg.er{background:var(--red-dim);color:var(--red);border:1px solid #4a1a1a}
+.bdg.w{background:var(--yellow-dim);color:var(--yellow);border:1px solid #4a2a00}
+.to{font-size:7px;background:var(--green-dim);color:var(--green);border:1px solid #1a4a1a;border-radius:3px;padding:1px 4px}
+.tu{font-size:7px;background:var(--orange-dim);color:#fb923c;border:1px solid #4a2000;border-radius:3px;padding:1px 4px}
+.pbox{background:var(--bg3);border:1px solid var(--brd);border-radius:6px;padding:7px 9px;margin-bottom:6px}
+.pbox-t{font-size:8px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-weight:700}
+.sl-r{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.sl-r label{font-size:9px;color:var(--txt2);white-space:nowrap}
+.sl-r input[type=range]{flex:1;accent-color:var(--blue)}
+.sl-r span{font-size:10px;font-weight:600;min-width:28px;text-align:right;color:var(--txt)}
+.htxt{font-size:9.5px;color:var(--txt3);line-height:1.8}
+.htxt b{color:var(--txt2)}
+.sect-div{height:1px;background:var(--brd);margin:7px 0}
+.thermal-box{background:var(--orange-dim);border:1px solid #3a2000;border-radius:5px;padding:6px 8px;margin-top:6px}
+.thermal-box .pbox-t{color:var(--orange)}
+.curve-box{background:var(--purple-dim);border:1px solid #3a2a5a;border-radius:5px;padding:6px 8px;margin-top:6px}
+.curve-box .pbox-t{color:var(--purple)}
+.curve-row{display:flex;gap:4px;margin-bottom:4px;align-items:center}
+.curve-row input{flex:1;padding:3px 6px;font-size:10px;border:1px solid var(--brd);border-radius:4px;background:var(--bg3);color:var(--txt);outline:none}
+.curve-row input:focus{border-color:var(--purple)}
+.curve-row span{font-size:9px;color:var(--txt3);min-width:20px}
+.curve-add{font-size:9px;color:var(--purple);background:transparent;border:1px dashed #3a2a5a;border-radius:4px;cursor:pointer;padding:3px 8px;width:100%;margin-top:2px}
+.curve-add:hover{background:var(--purple-dim)}
+.multi-hint{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);background:rgba(20,25,35,.92);border:1px solid var(--brd2);border-radius:6px;padding:5px 12px;font-size:9px;color:var(--txt2);white-space:nowrap;pointer-events:none;display:none}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<!-- TOP BAR -->
+<div id="bar">
+  <div class="tb-group">
+    <button class="tb on" id="bsel"><span class="tb-icon">↖</span> Select</button>
+    <button class="tb" id="bpip"><span class="tb-icon">—</span> Pipe</button>
+    <button class="tb" id="bvlv"><span class="tb-icon">⊠</span> Valve</button>
+  </div>
+  <div class="tb-group">
+    <button class="tb calc" id="bcalc"><span class="tb-icon">⚡</span> Calculate</button>
+  </div>
+  <div class="tb-group">
+    <button class="tb undo" id="bundo" title="Ctrl+Z"><span class="tb-icon">↩</span> Undo</button>
+    <button class="tb undo" id="bredo" title="Ctrl+Y"><span class="tb-icon">↪</span> Redo</button>
+  </div>
+  <div class="tb-group">
+    <button class="tb pdf" id="bexport"><span class="tb-icon">⬇</span> Export PDF</button>
+    <button class="tb red" id="bclr"><span class="tb-icon">✕</span> Clear</button>
+  </div>
+  <span id="mtag">select</span>
+</div>
+
+<div id="body">
+
+<!-- LIBRARY -->
+<div id="lib">
+
+  <div class="lib-group" id="grp-supply">
+    <div class="lib-group-header" onclick="toggleGroup('grp-supply')">Supply <span class="arr">▾</span></div>
+    <div class="lib-group-items">
+      <div class="li" draggable="true" data-type="tank">
+        <div class="type-dot" style="background:#a3e635"></div>
+        <svg width="44" height="28" viewBox="0 0 44 28" fill="none">
+          <rect x="1" y="1" width="42" height="26" rx="2" stroke="#a3e635" stroke-width="1.3" fill="#081500"/>
+          <rect x="1" y="14" width="42" height="13" fill="#0e2000" opacity=".9"/>
+          <line x1="1" y1="14" x2="43" y2="14" stroke="#a3e635" stroke-width=".9"/>
+          <text x="22" y="10" text-anchor="middle" fill="#a3e635" font-size="7" font-family="sans-serif">TANK</text>
+        </svg><span>Tank</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="lib-group" id="grp-pumps">
+    <div class="lib-group-header" onclick="toggleGroup('grp-pumps')">Pumps <span class="arr">▾</span></div>
+    <div class="lib-group-items">
+      <div class="li" draggable="true" data-type="pump-booster">
+        <div class="type-dot" style="background:#60a5fa"></div>
+        <svg width="44" height="28" viewBox="0 0 44 28" fill="none">
+          <circle cx="22" cy="14" r="11" stroke="#60a5fa" stroke-width="1.3" fill="#080f1a"/>
+          <path d="M16 14L26 8L26 20Z" fill="#60a5fa" opacity=".9"/>
+          <line x1="1" y1="14" x2="11" y2="14" stroke="#60a5fa" stroke-width="1.8"/>
+          <line x1="33" y1="14" x2="43" y2="14" stroke="#60a5fa" stroke-width="1.8"/>
+          <text x="22" y="27" text-anchor="middle" fill="#60a5fa" font-size="6" font-family="sans-serif">BST</text>
+        </svg><span>Booster</span>
+      </div>
+      <div class="li" draggable="true" data-type="pump-lift">
+        <div class="type-dot" style="background:#818cf8"></div>
+        <svg width="44" height="28" viewBox="0 0 44 28" fill="none">
+          <circle cx="22" cy="14" r="11" stroke="#818cf8" stroke-width="1.3" fill="#0c0a1a"/>
+          <path d="M16 14L26 8L26 20Z" fill="#818cf8" opacity=".9"/>
+          <line x1="1" y1="14" x2="11" y2="14" stroke="#818cf8" stroke-width="1.8"/>
+          <line x1="33" y1="14" x2="43" y2="14" stroke="#818cf8" stroke-width="1.8"/>
+          <text x="22" y="27" text-anchor="middle" fill="#818cf8" font-size="6" font-family="sans-serif">LIFT</text>
+        </svg><span>Lift/Transfer</span>
+      </div>
+      <div class="li" draggable="true" data-type="pump-circ">
+        <div class="type-dot" style="background:#34d399"></div>
+        <svg width="44" height="28" viewBox="0 0 44 28" fill="none">
+          <circle cx="22" cy="14" r="11" stroke="#34d399" stroke-width="1.3" fill="#041a10"/>
+          <path d="M16 14 A6 6 0 1 1 22 20" stroke="#34d399" stroke-width="1.8" fill="none"/>
+          <line x1="1" y1="14" x2="11" y2="14" stroke="#34d399" stroke-width="1.8"/>
+          <line x1="33" y1="14" x2="43" y2="14" stroke="#34d399" stroke-width="1.8"/>
+          <text x="22" y="27" text-anchor="middle" fill="#34d399" font-size="6" font-family="sans-serif">CIRC</text>
+        </svg><span>Circulation</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="lib-group" id="grp-heat">
+    <div class="lib-group-header" onclick="toggleGroup('grp-heat')">Heat <span class="arr">▾</span></div>
+    <div class="lib-group-items">
+      <div class="li" draggable="true" data-type="hex">
+        <div class="type-dot" style="background:#f97316"></div>
+        <svg width="44" height="28" viewBox="0 0 44 28" fill="none">
+          <rect x="5" y="3" width="34" height="22" rx="2" stroke="#f97316" stroke-width="1.2" fill="#160800"/>
+          <line x1="5" y1="11" x2="39" y2="11" stroke="#f97316" stroke-width=".7" stroke-dasharray="3,2"/>
+          <line x1="5" y1="17" x2="39" y2="17" stroke="#f97316" stroke-width=".7" stroke-dasharray="3,2"/>
+          <line x1="1" y1="14" x2="5" y2="14" stroke="#f97316" stroke-width="1.5"/>
+          <line x1="39" y1="14" x2="43" y2="14" stroke="#f97316" stroke-width="1.5"/>
+          <text x="22" y="10" text-anchor="middle" fill="#f97316" font-size="6" font-family="sans-serif">HEX</text>
+        </svg><span>Heat Exchanger</span>
+      </div>
+      <div class="li" draggable="true" data-type="calorifier">
+        <div class="type-dot" style="background:#fb923c"></div>
+        <svg width="44" height="28" viewBox="0 0 44 28" fill="none">
+          <ellipse cx="22" cy="14" rx="14" ry="11" stroke="#fb923c" stroke-width="1.2" fill="#160a00"/>
+          <path d="M14 18 Q22 5 30 18" stroke="#fb923c" stroke-width="1.3" fill="none"/>
+          <line x1="1" y1="14" x2="8" y2="14" stroke="#fb923c" stroke-width="1.5"/>
+          <line x1="36" y1="14" x2="43" y2="14" stroke="#fb923c" stroke-width="1.5"/>
+        </svg><span>Calorifier</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="lib-group" id="grp-end">
+    <div class="lib-group-header" onclick="toggleGroup('grp-end')">Endpoints <span class="arr">▾</span></div>
+    <div class="lib-group-items">
+      <div class="li" draggable="true" data-type="valve">
+        <div class="type-dot" style="background:#facc15"></div>
+        <svg width="44" height="28" viewBox="0 0 44 28" fill="none">
+          <polygon points="2,6 20,14 2,22" stroke="#facc15" stroke-width="1.2" fill="#161000"/>
+          <polygon points="42,6 24,14 42,22" stroke="#facc15" stroke-width="1.2" fill="#161000"/>
+          <line x1="20" y1="14" x2="24" y2="14" stroke="#facc15" stroke-width="1.5"/>
+          <line x1="21" y1="6" x2="21" y2="1" stroke="#facc15" stroke-width="1.2"/>
+          <line x1="17" y1="1" x2="25" y2="1" stroke="#facc15" stroke-width="1.2"/>
+        </svg><span>Valve</span>
+      </div>
+      <div class="li" draggable="true" data-type="outlet">
+        <div class="type-dot" style="background:#f472b6"></div>
+        <svg width="44" height="28" viewBox="0 0 44 28" fill="none">
+          <circle cx="22" cy="14" r="10" stroke="#22c55e" stroke-width="1.5" fill="#051a0a"/>
+          <line x1="14" y1="14" x2="30" y2="14" stroke="#22c55e" stroke-width="1.3"/>
+          <line x1="22" y1="6" x2="22" y2="22" stroke="#22c55e" stroke-width="1.3"/>
+          <circle cx="22" cy="14" r="3" fill="#22c55e"/>
+        </svg><span>Outlet</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CANVAS -->
+<div id="cvwrap">
+  <canvas id="cv"></canvas>
+  <div id="sel-box"></div>
+  <div id="legends">
+    <div class="leg-hd">Velocity</div>
+    <div class="leg-row"><div class="leg-line" style="background:#60a5fa"></div><span>v &lt; 1.2 m/s</span></div>
+    <div class="leg-row"><div class="leg-line" style="background:#4ade80"></div><span>1.2 – 2.4</span></div>
+    <div class="leg-row"><div class="leg-line" style="background:#f87171"></div><span>v &gt; 2.4 m/s</span></div>
+  </div>
+  <div id="zctrl">
+    <div class="zb" id="zin">+</div>
+    <div class="zb" id="zout">−</div>
+    <div class="zb" id="zrst" style="font-size:9px">1:1</div>
+  </div>
+  <div class="multi-hint" id="multi-hint">Shift+click to add • drag empty = box select</div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="rp">
+  <div id="rp-props">
+    <div id="phint">
+      <div class="stit">How to Use</div>
+      <p class="htxt">
+        1. Drag components from library.<br><br>
+        2. <b style="color:#60a5fa">Pipe</b>: click A then B.<br><br>
+        3. Click pipe middle to branch.<br><br>
+        4. <b style="color:#facc15">Valve on pipe</b>: activate Valve mode, click pipe.<br><br>
+        5. <b style="color:#a78bfa">Multi-select</b>: drag empty area or Shift+click.<br><br>
+        6. Scroll = zoom · Space+drag = pan.<br><br>
+        7. Ctrl+Z = undo · Ctrl+Y = redo.
+      </p>
+    </div>
+    <div id="pprops" style="display:none">
+      <div class="stit" id="ptit">Properties</div>
+      <div id="pfields"></div>
+      <div id="pbtns"></div>
+    </div>
+  </div>
+  <div id="rp-results">
+    <div class="stit">Results</div>
+    <div id="rcont"></div>
+  </div>
+  <div id="rp-bot">
+    <div class="stit">Settings</div>
+    <div class="fld">
+      <label>Calc Method</label>
+      <select id="calc-method">
+        <option value="rule">Approximation (Friction %)</option>
+        <option value="hw">Hazen-Williams</option>
+      </select>
+    </div>
+    <div id="rot-set">
+      <div class="sl-r"><label>Friction %</label><input type="range" id="fsl" min="6" max="11" step="1" value="8"><span id="fval">8%</span></div>
+    </div>
+    <div id="hw-set" style="display:none">
+      <div class="fld"><label>Material (C value)</label>
+        <select id="hw-c">
+          <option value="150">PVC / PE — C=150</option>
+          <option value="148">PPR — C=148</option>
+          <option value="140">Copper — C=140</option>
+          <option value="130" selected>New Steel — C=130</option>
+          <option value="120">Galv. Steel — C=120</option>
+          <option value="100">Cast Iron — C=100</option>
+          <option value="80">Old Iron — C=80</option>
+        </select>
+      </div>
+    </div>
+    <div class="urow">
+      <div class="fld"><label>Pressure</label><select id="up"><option value="m" selected>m H₂O</option><option value="bar">bar</option><option value="psi">psi</option><option value="kpa">kPa</option></select></div>
+      <div class="fld"><label>Flow</label><select id="uf"><option value="ls">L/s</option><option value="lm">L/min</option><option value="m3h">m³/h</option></select></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /body -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════
+//  CORE SETUP
+// ═══════════════════════════════════════════════════
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),wrap=document.getElementById('cvwrap');
+let W,H,zoom=1,panX=0,panY=0,isPanning=false,panStart={x:0,y:0};
+function rsz(){W=wrap.clientWidth;H=wrap.clientHeight;cv.width=W;cv.height=H;draw();}
+const ro=new ResizeObserver(rsz);ro.observe(wrap);
+
+function toggleGroup(id){
+  const g=document.getElementById(id);g.classList.toggle('collapsed');
+}
+
+// ═══════════════════════════════════════════════════
+//  UNDO / REDO
+// ═══════════════════════════════════════════════════
+let history=[],historyPtr=-1;
+function snapshot(){
+  const s=JSON.stringify({
+    nodes:nodes.map(n=>({...n})),
+    pipes:pipes.map(p=>({...p,nA:p.nA?.id,nB:p.nB?.id,valve:p.valve?.id}))
+  });
+  history=history.slice(0,historyPtr+1);
+  history.push(s);
+  historyPtr=history.length-1;
+  if(history.length>60)history.shift();
+  updateUndoRedo();
+}
+function updateUndoRedo(){
+  document.getElementById('bundo').style.opacity=historyPtr>0?'1':'0.4';
+  document.getElementById('bredo').style.opacity=historyPtr<history.length-1?'1':'0.4';
+}
+function restoreSnap(s){
+  const d=JSON.parse(s);
+  nodes=d.nodes;
+  pipes=d.pipes.map(p=>{
+    p.nA=nodes.find(n=>n.id===p.nA);
+    p.nB=nodes.find(n=>n.id===p.nB);
+    if(p.valve){const vn=nodes.find(n=>n.id===p.valve);p.valve=vn||null;}
+    return p;
+  });
+  sel=null;selSet.clear();calc=false;draw();
+  document.getElementById('phint').style.display='';
+  document.getElementById('pprops').style.display='none';
+}
+function undo(){if(historyPtr>0){historyPtr--;restoreSnap(history[historyPtr]);updateUndoRedo();}}
+function redo(){if(historyPtr<history.length-1){historyPtr++;restoreSnap(history[historyPtr]);updateUndoRedo();}}
+
+// ═══════════════════════════════════════════════════
+//  IPC FIXTURE UNITS
+// ═══════════════════════════════════════════════════
+const FU_T=[[0,0],[1,.05],[2,.07],[4,.11],[6,.14],[10,.18],[20,.27],[30,.33],[50,.42],[100,.60],[200,.85],[500,1.38],[1000,1.95]];
+function fu2ls(f){if(f<=0)return 0;for(let i=0;i<FU_T.length-1;i++){const[a,b]=FU_T[i],[c,d]=FU_T[i+1];if(f<=c)return b+(f-a)/(c-a)*(d-b);}return FU_T[FU_T.length-1][1];}
+
+// ═══════════════════════════════════════════════════
+//  UNIT CONVERSIONS
+// ═══════════════════════════════════════════════════
+const gPU=()=>document.getElementById('up').value;
+const gFU2=()=>document.getElementById('uf').value;
+function m2b(m){return m/10.2;}
+function pd(bar){const u=gPU(),v=u==='m'?bar*10.2:u==='psi'?bar*14.504:u==='kpa'?bar*100:bar;return v.toFixed(2)+' '+(u==='m'?'m':u);}
+function pl(){const u=gPU();return u==='m'?'m H₂O':u==='psi'?'psi':u==='kpa'?'kPa':'bar';}
+function p2d(bar){const u=gPU();return u==='m'?+(bar*10.2).toFixed(2):u==='psi'?+(bar*14.504).toFixed(2):u==='kpa'?+(bar*100).toFixed(1):+bar.toFixed(3);}
+function d2p(v){const u=gPU();return u==='m'?v/10.2:u==='psi'?v/14.504:u==='kpa'?v/100:v;}
+function fd(ls){const u=gFU2();return u==='lm'?(ls*60).toFixed(2)+' L/m':u==='m3h'?(ls*3.6).toFixed(3)+' m³/h':ls.toFixed(3)+' L/s';}
+function fl(){const u=gFU2();return u==='lm'?'L/min':u==='m3h'?'m³/h':'L/s';}
+function f2d(ls){const u=gFU2();return u==='lm'?+(ls*60).toFixed(3):u==='m3h'?+(ls*3.6).toFixed(4):+ls.toFixed(4);}
+function d2f(v){const u=gFU2();return u==='lm'?v/60:u==='m3h'?v/3.6:v;}
+
+// ═══════════════════════════════════════════════════
+//  COORDINATE TRANSFORMS
+// ═══════════════════════════════════════════════════
+function w2s(x,y){return{x:x*zoom+panX,y:y*zoom+panY};}
+function s2w(x,y){return{x:(x-panX)/zoom,y:(y-panY)/zoom};}
+function hwLoss(L,Q_ls,D_mm,C){const Leq=L*1.25,Q=Q_ls/1000,D=D_mm/1000;if(Q<1e-9||D<1e-6)return 0;return 10.67*Leq*Math.pow(Q,1.852)/(Math.pow(C,1.852)*Math.pow(D,4.87));}
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let nodes=[],pipes=[],sel=null,selSet=new Set(),mode='sel',pipeSt=null,drag=null,doff={x:0,y:0},mp={x:0,y:0};
+let calc=false,ncnt={};
+// multi-select box
+let boxSelecting=false,boxStart={x:0,y:0},boxEnd={x:0,y:0};
+// drag multiple
+let multiDragStart=null,multiDragOffsets=[];
+function uid(){return Date.now()+Math.random();}
+
+// NODE COLORS
+const TC={
+  'tank':{s:'#a3e635',f:'#081500',label:'TANK'},
+  'pump-booster':{s:'#60a5fa',f:'#080f1a',label:'BST'},
+  'pump-lift':{s:'#818cf8',f:'#0c0a1a',label:'LIFT'},
+  'pump-circ':{s:'#34d399',f:'#041a10',label:'CIRC'},
+  'hex':{s:'#f97316',f:'#160800',label:'HEX'},
+  'calorifier':{s:'#fb923c',f:'#160a00',label:'CAL'},
+  'valve':{s:'#facc15',f:'#161000',label:'V'},
+  'outlet':{s:'#22c55e',f:'#051a0a',label:'OUT'},
+  'junc':{s:'#7dd3fc',f:'#001620',label:'·'}
+};
+
+function mkN(type,wx,wy){
+  ncnt[type]=(ncnt[type]||0)+1;
+  const c=TC[type]||{label:type};
+  const L=c.label+ncnt[type];
+  const b={id:uid(),type,wx,wy,label:L,cl:'',rP:undefined};
+  if(type==='tank')return{...b,elev:10,pbar:0};
+  if(type==='pump-booster')return{...b,hm:null,fls:1.5,flip:false,rH:undefined,pumpType:'booster',curvePoints:[]};
+  if(type==='pump-lift')return{...b,hm:null,fls:1.5,flip:false,rH:undefined,pumpType:'lift',liftElev:10,curvePoints:[]};
+  if(type==='pump-circ')return{...b,hm:null,flip:false,rH:undefined,pumpType:'circ',circMethod:'fu',circFU:50,circRisers:5,circHeatLoss:500,circFls:undefined,curvePoints:[]};
+  if(type==='valve')return{...b,kv:25,pdrop:undefined};
+  if(type==='outlet')return{...b,fm:'manual',fls:.3,fu:6,rbar:1.5,elev:0,sP:undefined,fP:undefined,flowDownstream:undefined};
+  if(type==='hex')return{...b,pdm:3,Tin:80,Tout:60,mflow:1,cpFluid:4.18,Qkw:undefined};
+  if(type==='calorifier')return{...b,pdm:3,Tin:80,Tout:60,mflow:1,cpFluid:4.18,Qkw:undefined};
+  if(type==='junc')return{...b,eqLoss:0};
+  return b;
+}
+
+function isPump(t){return t==='pump-booster'||t==='pump-lift'||t==='pump-circ';}
+function isHeat(t){return t==='hex'||t==='calorifier';}
+
+// pump curve interpolation
+function pumpCurveHead(pump,flowLs){
+  const pts=pump.curvePoints||[];
+  if(!pts.length)return null;
+  // sort by flow
+  const sorted=[...pts].sort((a,b)=>a.q-b.q);
+  if(flowLs<=sorted[0].q)return sorted[0].h;
+  if(flowLs>=sorted[sorted.length-1].q)return sorted[sorted.length-1].h;
+  for(let i=0;i<sorted.length-1;i++){
+    const a=sorted[i],b=sorted[i+1];
+    if(flowLs>=a.q&&flowLs<=b.q){const t=(flowLs-a.q)/(b.q-a.q);return a.h+t*(b.h-a.h);}
+  }
+  return null;
+}
+
+function velClr(v){if(v===undefined||!calc)return'#2e3540';if(v<1.2)return'#60a5fa';if(v<=2.4)return'#4ade80';return'#f87171';}
+
+function nClr(n){
+  const base=TC[n.type]||{s:'#888',f:'#1a1a1a'};
+  if(!calc)return base;
+  if(n.type==='outlet'){
+    const p=n.rP,r=n.rbar||1.5;
+    if(p===undefined)return{...base,s:'#444'};
+    if(p>=r)return{...base,s:'#22c55e',f:'#041a04'};
+    if(p>=r*.7)return{...base,s:'#eab308',f:'#141000'};
+    return{...base,s:'#ef4444',f:'#1a0404'};
+  }
+  return base;
+}
+
+// ═══════════════════════════════════════════════════
+//  DRAW HELPERS
+// ═══════════════════════════════════════════════════
+function bgText(text,x,y,align,baseline,fg,bg){
+  ctx.save();ctx.font='bold 8.5px "Segoe UI",sans-serif';ctx.textAlign=align;ctx.textBaseline=baseline;
+  const m=ctx.measureText(text),pad=2;
+  const bx=align==='center'?x-m.width/2:align==='right'?x-m.width:x;
+  const by=baseline==='middle'?y-5.5:baseline==='top'?y:y-10;
+  ctx.fillStyle=bg;ctx.fillRect(bx-pad,by-pad,m.width+pad*2,12+pad*2);
+  ctx.fillStyle=fg;ctx.fillText(text,x,y);ctx.restore();
+}
+
+function drawArrow(x,y,ang,clr){
+  ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.fillStyle=clr;
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-6,-3.5);ctx.lineTo(-6,3.5);ctx.closePath();ctx.fill();ctx.restore();
+}
+
+function drawValveOnPipe(x,y,ang,isSel){
+  ctx.save();ctx.translate(x,y);ctx.rotate(ang);
+  ctx.strokeStyle=isSel?'#fff':'#facc15';ctx.lineWidth=1.4;
+  ctx.beginPath();ctx.moveTo(-9,-5);ctx.lineTo(0,0);ctx.lineTo(-9,5);ctx.closePath();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(9,-5);ctx.lineTo(0,0);ctx.lineTo(9,5);ctx.closePath();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,-3);ctx.lineTo(0,-9);ctx.moveTo(-4,-9);ctx.lineTo(4,-9);ctx.stroke();
+  ctx.restore();
+}
+
+function drawPipe(p){
+  if(!p.nA||!p.nB)return;
+  const sa=w2s(p.nA.wx,p.nA.wy),sb=w2s(p.nB.wx,p.nB.wy);
+  const clr=velClr(p.vel);
+  const isSel=sel===p||selSet.has(p);
+  ctx.strokeStyle=isSel?'#fff':clr;
+  ctx.lineWidth=isSel?3:2.2;
+  ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(sa.x,sa.y);ctx.lineTo(sb.x,sb.y);ctx.stroke();
+  const ang=Math.atan2(sb.y-sa.y,sb.x-sa.x);
+  const mx=(sa.x+sb.x)/2,my=(sa.y+sb.y)/2;
+  drawArrow(mx,my,ang,clr);
+  if(zoom>0.45){
+    const perp=ang-Math.PI/2,ox=Math.cos(perp)*12,oy=Math.sin(perp)*12;
+    bgText('Ø'+(p.dia||25)+'/'+(p.len||10)+'m',mx+ox,my+oy,'center','middle','#3a4555','rgba(0,0,0,.88)');
+    if(calc&&p.fls!==undefined)bgText(fd(p.fls),mx-ox,my-oy,'center','middle','#60a5fa','rgba(0,0,0,.9)');
+    if(calc){
+      if(p.pA!==undefined)bgText(pd(p.pA),sa.x,sa.y-16,'center','middle','#ca8a04','rgba(0,0,0,.92)');
+      if(p.pB!==undefined)bgText(pd(p.pB),sb.x,sb.y-16,'center','middle','#4ade80','rgba(0,0,0,.92)');
+    }
+  }
+  // valve ON pipe only — no node drawn separately
+  if(p.valve){
+    const vx=(sa.x+sb.x)/2,vy=(sa.y+sb.y)/2;
+    drawValveOnPipe(vx,vy,ang,p.valve===sel);
+    if(zoom>0.5){
+      const label=p.valve.cl||p.valve.label;
+      bgText(label,vx,vy+16,'center','middle','#a8890a','rgba(0,0,0,.88)');
+      if(calc&&p.valve.pdrop!==undefined)
+        bgText('ΔP='+p.valve.pdrop.toFixed(2)+'m',vx,vy+26,'center','middle','#facc15','rgba(0,0,0,.88)');
+    }
+  }
+}
+
+function drawNode(n){
+  // valve nodes are rendered only on pipe, never standalone
+  if(n.type==='valve')return;
+  const s=w2s(n.wx,n.wy);const{x,y}=s;
+  const c=nClr(n);const t=n.type;const fl2=n.flip?-1:1;
+  const isSel=n===sel||selSet.has(n);
+  ctx.fillStyle=c.f;ctx.strokeStyle=isSel?'#fff':c.s;ctx.lineWidth=isSel?2.2:1.5;ctx.setLineDash([]);
+
+  if(t==='tank'){
+    const w=46,h=30;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x-w/2,y-h/2,w,h,3);else ctx.rect(x-w/2,y-h/2,w,h);
+    ctx.fill();ctx.stroke();
+    ctx.fillStyle='#0e2000';ctx.fillRect(x-w/2+1,y,w-2,h/2-1);
+    ctx.strokeStyle=c.s;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x-w/2,y);ctx.lineTo(x+w/2,y);ctx.stroke();
+    if(zoom>0.4){ctx.font='bold 7px sans-serif';ctx.fillStyle=c.s;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('TANK',x,y-7);}
+  } else if(isPump(t)){
+    const r=15,col=c.s;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.save();ctx.translate(x,y);ctx.rotate(fl2===1?0:Math.PI);
+    ctx.fillStyle=col;const hs=r*.52;
+    ctx.beginPath();ctx.moveTo(hs,0);ctx.lineTo(-hs,-hs*.88);ctx.lineTo(-hs,hs*.88);ctx.closePath();ctx.fill();
+    ctx.restore();
+    if(t==='pump-circ'){
+      ctx.strokeStyle=col;ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.arc(x,y,r+5,Math.PI*.7,Math.PI*2.2);ctx.stroke();
+      drawArrow(x+(r+5)*Math.cos(Math.PI*2.2),y+(r+5)*Math.sin(Math.PI*2.2),Math.PI*2.2+Math.PI/2,col);
+    }
+    const inX=x+(r+5)*(fl2===1?-1:1),outX=x+(r+5)*(fl2===1?1:-1);
+    ctx.fillStyle='#4ade80';ctx.beginPath();ctx.arc(inX,y,2.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f87171';ctx.beginPath();ctx.arc(outX,y,2.5,0,Math.PI*2);ctx.fill();
+    if(zoom>0.55){
+      ctx.font='7px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';
+      ctx.fillStyle='#4ade80';ctx.fillText('IN',inX,y-5);
+      ctx.fillStyle='#f87171';ctx.fillText('OUT',outX,y-5);
+    }
+  } else if(t==='outlet'){
+    const r=13;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x-r*.6,y);ctx.lineTo(x+r*.6,y);ctx.moveTo(x,y-r*.6);ctx.lineTo(x,y+r*.6);ctx.stroke();
+    ctx.fillStyle=c.s;ctx.beginPath();ctx.arc(x,y,r*.28,0,Math.PI*2);ctx.fill();
+  } else if(t==='hex'){
+    const w=40,h=26;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x-w/2,y-h/2,w,h,3);else ctx.rect(x-w/2,y-h/2,w,h);
+    ctx.fill();ctx.stroke();
+    ctx.strokeStyle=c.s;ctx.lineWidth=.7;ctx.setLineDash([3,2]);
+    ctx.beginPath();ctx.moveTo(x-w/2+5,y-4);ctx.lineTo(x+w/2-5,y-4);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x-w/2+5,y+4);ctx.lineTo(x+w/2-5,y+4);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-w/2,y);ctx.lineTo(x-w/2-5,y);ctx.moveTo(x+w/2,y);ctx.lineTo(x+w/2+5,y);ctx.stroke();
+    if(zoom>0.4){ctx.font='bold 6.5px sans-serif';ctx.fillStyle=c.s;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('HEX',x,y);}
+  } else if(t==='calorifier'){
+    ctx.beginPath();ctx.ellipse(x,y,18,13,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x-8,y+4);ctx.quadraticCurveTo(x,y-8,x+8,y+4);ctx.stroke();
+    ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y-13);ctx.lineTo(x,y-19);ctx.moveTo(x,y+13);ctx.lineTo(x,y+19);ctx.stroke();
+  } else if(t==='junc'){
+    ctx.fillStyle=c.s;ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
+  }
+
+  // selection highlight
+  if(isSel){
+    ctx.strokeStyle='rgba(255,255,255,.28)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    const sr=isPump(t)||t==='outlet'?21:t==='junc'?10:t==='hex'?24:22;
+    ctx.beginPath();
+    if(isPump(t)||t==='outlet'||t==='junc')ctx.arc(x,y,sr,0,Math.PI*2);
+    else ctx.rect(x-sr,y-sr*.65,sr*2,sr*1.3);
+    ctx.stroke();ctx.setLineDash([]);
+  }
+
+  // labels
+  const lbl=n.cl||n.label;
+  const yo=t==='junc'?9:isPump(t)||t==='outlet'||isHeat(t)?21:21;
+  if(zoom>0.32){
+    bgText(lbl,x,y+yo,'center','top','#5a6475','rgba(0,0,0,.85)');
+    if(calc&&n.rP!==undefined){
+      const req=n.rbar||0;
+      const pc=t==='outlet'?(n.rP>=req?'#22c55e':n.rP>=req*.7?'#eab308':'#ef4444'):(isPump(t)?'#60a5fa':'#888');
+      bgText(pd(n.rP),x,y+yo+13,'center','top',pc,'rgba(0,0,0,.92)');
+      if(t==='outlet'&&n.sP!==undefined&&zoom>0.6){
+        bgText('S:'+pd(n.sP),x,y+yo+25,'center','top','#4a8abf','rgba(0,0,0,.85)');
+        bgText('F:'+pd(n.fP||0),x,y+yo+36,'center','top','#a04040','rgba(0,0,0,.85)');
+      }
+    }
+    if(isHeat(n.type)&&calc&&n.Qkw!==undefined){
+      bgText('Q='+n.Qkw.toFixed(1)+'kW',x,y+yo+13,'center','top','#fb923c','rgba(0,0,0,.9)');
+    }
+    if(!calc&&isPump(t)&&n.hm===null&&!(n.curvePoints&&n.curvePoints.length)){
+      bgText('? head',x,y+yo+13,'center','top','#6a3a00','rgba(0,0,0,.82)');
+    }
+    if(t==='pump-circ'&&calc&&n.circFls!==undefined){
+      bgText(fd(n.circFls),x,y+yo+13,'center','top','#34d399','rgba(0,0,0,.9)');
+    }
+  }
+}
+
+function drawGrid(){
+  const step=40*zoom;
+  const ox=((panX%step)+step)%step,oy=((panY%step)+step)%step;
+  // dots only — cleaner engineering grid
+  ctx.fillStyle='#1e2530';
+  for(let x=ox;x<W;x+=step)for(let y=oy;y<H;y+=step){
+    ctx.beginPath();ctx.arc(x,y,1.2,0,Math.PI*2);ctx.fill();
+  }
+  // subtle major grid lines every 5
+  const step5=step*5;
+  const ox5=((panX%(step5))+step5)%step5,oy5=((panY%(step5))+step5)%step5;
+  ctx.strokeStyle='#181e28';ctx.lineWidth=.5;ctx.setLineDash([]);
+  for(let x=ox5;x<W;x+=step5){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=oy5;y<H;y+=step5){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+}
+
+function drawSelBox(){
+  if(!boxSelecting)return;
+  const el=document.getElementById('sel-box');
+  const x1=Math.min(boxStart.x,boxEnd.x),y1=Math.min(boxStart.y,boxEnd.y);
+  const x2=Math.max(boxStart.x,boxEnd.x),y2=Math.max(boxStart.y,boxEnd.y);
+  el.style.display='block';
+  el.style.left=x1+'px';el.style.top=y1+'px';
+  el.style.width=(x2-x1)+'px';el.style.height=(y2-y1)+'px';
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#080a0d';ctx.fillRect(0,0,W,H);
+  drawGrid();ctx.setLineDash([]);
+  pipes.forEach(drawPipe);
+  if(pipeSt&&mode==='pip'){
+    const ss=w2s(pipeSt.wx,pipeSt.wy);
+    ctx.strokeStyle='#3b82f6';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(ss.x,ss.y);ctx.lineTo(mp.x,mp.y);ctx.stroke();ctx.setLineDash([]);
+  }
+  nodes.forEach(drawNode);
+  drawSelBox();
+}
+
+// ═══════════════════════════════════════════════════
+//  HIT TESTS
+// ═══════════════════════════════════════════════════
+function hitN(sx,sy,skip){
+  const{x:wx,y:wy}=s2w(sx,sy);
+  for(let i=nodes.length-1;i>=0;i--){
+    const n=nodes[i];
+    if(n===skip||n.type==='valve')continue;
+    if(Math.hypot(wx-n.wx,wy-n.wy)<28/zoom)return n;
+  }return null;
+}
+function hitPipe(sx,sy){
+  const{x:wx,y:wy}=s2w(sx,sy);
+  for(let i=pipes.length-1;i>=0;i--){
+    const p=pipes[i];if(!p.nA||!p.nB)continue;
+    const ax=p.nA.wx,ay=p.nA.wy,bx=p.nB.wx,by=p.nB.wy,dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
+    if(l2<1)continue;
+    const t=((wx-ax)*dx+(wy-ay)*dy)/l2;if(t<.08||t>.92)continue;
+    if(Math.hypot(wx-ax-t*dx,wy-ay-t*dy)<13/zoom)return{pipe:p,t,wx:ax+t*dx,wy:ay+t*dy};
+  }return null;
+}
+function hitValve(sx,sy){
+  const{x:wx,y:wy}=s2w(sx,sy);
+  for(const p of pipes){
+    if(p.valve){
+      const vx=(p.nA.wx+p.nB.wx)/2,vy=(p.nA.wy+p.nB.wy)/2;
+      if(Math.hypot(wx-vx,wy-vy)<18/zoom)return p.valve;
+    }
+  }return null;
+}
+function nodesInBox(x1,y1,x2,y2){
+  const w1=s2w(x1,y1),w2=s2w(x2,y2);
+  const minX=Math.min(w1.x,w2.x),maxX=Math.max(w1.x,w2.x);
+  const minY=Math.min(w1.y,w2.y),maxY=Math.max(w1.y,w2.y);
+  return nodes.filter(n=>n.type!=='valve'&&n.wx>=minX&&n.wx<=maxX&&n.wy>=minY&&n.wy<=maxY);
+}
+
+function splitPipe(pipe,jwx,jwy){
+  const j=mkN('junc',Math.round(jwx/20)*20,Math.round(jwy/20)*20);
+  nodes.push(j);const oldB=pipe.nB;
+  pipes.push({id:uid(),nA:j,nB:oldB,dia:pipe.dia||25,len:pipe.len||10});
+  pipe.nB=j;return j;
+}
+
+// ═══════════════════════════════════════════════════
+//  CALCULATION ENGINE (hydraulic logic unchanged)
+// ═══════════════════════════════════════════════════
+function buildAdj(){
+  const adj={};nodes.forEach(n=>{adj[n.id]=[];});
+  pipes.forEach(p=>{if(!p.nA||!p.nB)return;adj[p.nA.id].push({n:p.nB,p});adj[p.nB.id].push({n:p.nA,p});});
+  return adj;
+}
+function bfsLoss(srcId,adj){
+  const dist={};nodes.forEach(n=>{dist[n.id]=Infinity;});dist[srcId]=0;
+  const q=[srcId],vis=new Set([srcId]);
+  while(q.length){
+    const cid=q.shift();
+    (adj[cid]||[]).forEach(({n,p})=>{
+      if(vis.has(n.id))return;vis.add(n.id);
+      dist[n.id]=dist[cid]+(p.hL||0)+(p.vL||0);q.push(n.id);
+    });
+  }return dist;
+}
+function circFlow(pump){
+  if(pump.circMethod==='fu')return fu2ls(pump.circFU||50);
+  if(pump.circMethod==='risers'){const r=pump.circRisers||5;return fu2ls(r*10);}
+  if(pump.circMethod==='heat'){const Q=pump.circHeatLoss||500;return Q/(4.18*1000*20);}
+  return .3;
+}
+
+function calculate(){
+  saveProp();calc=true;
+  const method=document.getElementById('calc-method').value;
+  const fric=parseFloat(document.getElementById('fsl').value)/100;
+  const hwC=parseInt(document.getElementById('hw-c').value)||130;
+  const pumps=nodes.filter(n=>isPump(n.type));
+  const tanks=nodes.filter(n=>n.type==='tank');
+  const outlets=nodes.filter(n=>n.type==='outlet');
+  const boilers=nodes.filter(n=>isHeat(n.type));
+  const circPumps=nodes.filter(n=>n.type==='pump-circ');
+
+  // Thermal
+  nodes.filter(n=>isHeat(n.type)).forEach(n=>{
+    n.Qkw=n.mflow*n.cpFluid*Math.abs((n.Tin||80)-(n.Tout||60));
+  });
+  // Circ flow
+  circPumps.forEach(p=>{p.circFls=circFlow(p);});
+  // Outlet flow (FU or manual)
+  outlets.forEach(o=>{if(o.fm==='fu')o.fls=fu2ls(o.fu||6);});
+
+  const totFlow=outlets.reduce((s,o)=>s+(o.fls||.3),0)||1;
+  const adj=buildAdj();
+
+  // downstream flow counting
+  const vis2=new Set(),dFlow={};
+  nodes.forEach(n=>{dFlow[n.id]=0;});
+  outlets.forEach(o=>{dFlow[o.id]=o.fls||.3;});
+  function countFlowDown(id){
+    if(vis2.has(id))return dFlow[id];vis2.add(id);
+    (adj[id]||[]).forEach(({n})=>{dFlow[id]+=countFlowDown(n.id);});
+    return dFlow[id];
+  }
+  nodes.forEach(n=>{if(!vis2.has(n.id))countFlowDown(n.id);});
+
+  // store flowDownstream on outlets
+  outlets.forEach(o=>{o.flowDownstream=dFlow[o.id]||o.fls||0;});
+
+  // pipe hydraulics
+  pipes.forEach(p=>{
+    if(!p.nA||!p.nB)return;
+    p.fls=Math.max(dFlow[p.nB.id],1e-6);
+    const D=(p.dia||25)/1e3,Q=p.fls*.001;
+    p.vel=Q/(Math.PI*D*D/4);
+    if(method==='hw')p.hL=hwLoss(p.len||10,p.fls,p.dia||25,hwC);
+    else p.hL=(p.len||10)*1.25*fric;
+    if(p.valve){const kv=p.valve.kv||25;const dp=Math.pow(p.fls*3.6/kv,2)*10.2;p.vL=dp;p.valve.pdrop=dp;}
+    else p.vL=0;
+  });
+
+  // Equipment loss on BRANCH nodes only (junction with eqLoss>0)
+  const juncLoss={};
+  nodes.filter(n=>n.type==='junc'&&(n.eqLoss||0)>0).forEach(n=>{juncLoss[n.id]=n.eqLoss;});
+
+  const boilDropM=boilers.reduce((s,b)=>s+(b.pdm||0),0);
+  const tank=tanks[0];
+  const mainPump=pumps.find(p=>p.type==='pump-booster')||pumps.find(p=>p.type==='pump-lift')||pumps[0];
+  const tankElevM=tank?(tank.elev||0):0,tankStatM=tank?(tank.pbar||0)*10.2:0,staticM=tankElevM+tankStatM;
+  const src=tank||mainPump;
+  if(!src){showRes('<p style="font-size:10px;color:#ef4444">Add a tank or pump.</p>');draw();return;}
+  const distFromSrc=bfsLoss(src.id,adj);
+  const worstFricM=outlets.length?Math.max(...outlets.map(o=>isFinite(distFromSrc[o.id])?distFromSrc[o.id]:0)):0;
+  const maxElevM=outlets.length?Math.max(...outlets.map(o=>o.elev||0)):0;
+  const maxResM=outlets.length?Math.max(...outlets.map(o=>(o.rbar||1.5)*10.2)):15;
+  let pumpHM=0;const pUnk=mainPump&&mainPump.hm===null&&!(mainPump.curvePoints&&mainPump.curvePoints.length);
+
+  if(mainPump&&mainPump.curvePoints&&mainPump.curvePoints.length){
+    const ch=pumpCurveHead(mainPump,totFlow);
+    pumpHM=ch!==null?ch:(mainPump.hm||0);
+    mainPump.rH=pumpHM;
+  } else if(pUnk){
+    if(mainPump.type==='pump-lift')pumpHM=Math.max(0,(mainPump.liftElev||10)-tankElevM+worstFricM+boilDropM+maxResM-tankStatM);
+    else if(mainPump.type==='pump-circ')pumpHM=worstFricM+boilDropM;
+    else pumpHM=Math.max(0,(maxElevM-tankElevM)+worstFricM+boilDropM+maxResM-tankStatM);
+    mainPump.rH=pumpHM;
+  } else{pumpHM=mainPump?(mainPump.hm||0):0;}
+
+  const totSupM=staticM+pumpHM;
+  const nodeM={};nodeM[src.id]=totSupM;
+  const bq2=[src.id],bv2=new Set([src.id]);
+  while(bq2.length){
+    const cid=bq2.shift();
+    (adj[cid]||[]).forEach(({n,p})=>{
+      if(bv2.has(n.id))return;bv2.add(n.id);
+      const jl=juncLoss[cid]||0;
+      nodeM[n.id]=Math.max(0,(nodeM[cid]||0)-(p.hL||0)-(p.vL||0)-boilDropM-jl);
+      bq2.push(n.id);
+    });
+  }
+  pipes.forEach(p=>{if(!p.nA||!p.nB)return;p.pA=m2b(nodeM[p.nA.id]||0);p.pB=m2b(nodeM[p.nB.id]||0);});
+  nodes.forEach(n=>{
+    const m=nodeM[n.id];n.rP=m!==undefined?m2b(m):undefined;
+    if(n.type==='outlet'&&m!==undefined){n.sP=m2b(staticM+pumpHM);n.fP=m2b((distFromSrc[n.id]||0)+boilDropM);}
+  });
+  if(mainPump)mainPump.rP=m2b(pumpHM);
+  if(tank)tank.rP=m2b(staticM);
+
+  const resBar=m2b(totSupM-worstFricM-boilDropM);
+  const minOutP=outlets.length?Math.min(...outlets.map(o=>o.rP||0)):resBar;
+  const minReq=outlets.length?Math.min(...outlets.map(o=>o.rbar||1.5)):1.5;
+  const ok=minOutP>=minReq,wn=!ok&&minOutP>=minReq*.7,sc=ok?'ok':wn?'w':'er';
+
+  const methodLbl=method==='hw'?`Hazen-Williams (C=${hwC})`:`Approx. ${(fric*100).toFixed(0)}% +25%`;
+  const pR=pipes.map((p,i)=>{const vc=p.vel<1.2?'i':p.vel<=2.4?'ok':'er';return`<div class="rr"><span class="rl">Pipe ${i+1}</span><span class="rv ${vc}" style="font-size:9px">Q=${fd(p.fls||0)} · v=${(p.vel||0).toFixed(2)}m/s · ΔH=${(p.hL||0).toFixed(2)}m</span></div>`;}).join('');
+  const circRows=circPumps.map(p=>`<div class="rr"><span class="rl">${p.cl||p.label}</span><span class="rv v">Q=${fd(p.circFls||0)} · h=${p.rH?p.rH.toFixed(2):'?'} m</span></div>`).join('');
+  const heatRows=nodes.filter(n=>isHeat(n.type)).map(n=>`<div class="rr"><span class="rl">${n.cl||n.label}</span><span class="rv" style="color:#fb923c">Q=${n.Qkw!==undefined?n.Qkw.toFixed(1):'-'} kW · ΔP=${n.pdm||0} m</span></div>`).join('');
+
+  showRes(`
+    <div class="rr"><span class="rl">Method</span><span class="rv i" style="font-size:9px">${methodLbl}</span></div>
+    ${(pUnk||mainPump?.curvePoints?.length)&&mainPump?`<div class="rr"><span class="rl" style="color:#fb923c">Pump head req.</span><span class="rv" style="color:#fb923c">${pumpHM.toFixed(2)} m</span></div>`:''}
+    <div class="pbox"><div class="pbox-t">Pressure Summary</div>
+      <div class="rr"><span class="rl">🔵 Static</span><span class="rv i">${pd(m2b(staticM))}</span></div>
+      <div class="rr"><span class="rl">🔵 Pump head</span><span class="rv i">${pd(m2b(pumpHM))}</span></div>
+      <div class="rr"><span class="rl">= Total supply</span><span class="rv">${pd(m2b(totSupM))}</span></div>
+      <div class="rr"><span class="rl">🔴 Worst friction</span><span class="rv er">${pd(m2b(worstFricM))}</span></div>
+      ${boilDropM?`<div class="rr"><span class="rl">🔴 Equipment ΔP</span><span class="rv er">${pd(m2b(boilDropM))}</span></div>`:''}
+      <div class="rr"><span class="rl">🟢 Residual</span><span class="rv ${sc}">${pd(resBar)}</span></div>
+    </div>
+    ${circRows?`<div class="pbox"><div class="pbox-t">Circulation</div>${circRows}</div>`:''}
+    ${heatRows?`<div class="pbox"><div class="pbox-t">Thermal</div>${heatRows}</div>`:''}
+    <div class="rr"><span class="rl">Total demand</span><span class="rv">${fd(totFlow)}</span></div>
+    ${pR}
+    <div class="rr" style="margin-top:4px"><span class="rl">Status</span><span class="bdg ${sc}">${ok?'✓ OK':wn?'⚠ Low':'✗ Fail'}</span></div>
+  `);
+  if(sel)showProp(sel);draw();
+}
+
+function showRes(html){document.getElementById('rp-results').style.display='';document.getElementById('rcont').innerHTML=html;}
+
+// ═══════════════════════════════════════════════════
+//  PROPERTIES PANEL
+// ═══════════════════════════════════════════════════
+function showProp(item){
+  document.getElementById('phint').style.display='none';
+  document.getElementById('pprops').style.display='';
+  const tf=document.getElementById('ptit'),f=document.getElementById('pfields'),eb=document.getElementById('pbtns');
+  // valve on pipe identified: item.type==='valve' but no wx stored as standalone
+  const isV=item.type==='valve';
+  const isP=!!item.nA&&!item.type;
+  const t=item.type;
+  if(isP)tf.textContent='Pipe';
+  else if(isV)tf.textContent='Valve on Pipe';
+  else if(t==='pump-booster')tf.textContent='Booster Pump';
+  else if(t==='pump-lift')tf.textContent='Lift / Transfer Pump';
+  else if(t==='pump-circ')tf.textContent='Circulation Pump';
+  else if(t)tf.textContent=t.charAt(0).toUpperCase()+t.slice(1);
+  f.innerHTML='';eb.innerHTML='';let flds=[];
+
+  if(isP){
+    flds=[
+      {l:'Dia (mm)',k:'dia',v:item.dia||25},
+      {l:'Length (m)',k:'len',v:item.len||10},
+      {l:'Flow',k:'_fl',v:calc?fd(item.fls||0):'—',ro:true,out:true},
+      {l:'Velocity (m/s)',k:'_v',v:calc?(item.vel||0).toFixed(3):'—',ro:true,out:true,wv:calc&&item.vel>2.4},
+      {l:'Head loss (m)',k:'_hl',v:calc?(item.hL||0).toFixed(3):'—',ro:true,out:true},
+      {l:`P start (${pl()})`,k:'_pa',v:calc&&item.pA!==undefined?p2d(item.pA):'—',ro:true,out:true,cl:'#ca8a04'},
+      {l:`P end (${pl()})`,k:'_pb',v:calc&&item.pB!==undefined?p2d(item.pB):'—',ro:true,out:true,cl:'#4ade80'}
+    ];
+  } else if(isV){
+    flds=[
+      {l:'Label',k:'cl',v:item.cl,tp:'text'},
+      {l:'Kv',k:'kv',v:item.kv||25},
+      {l:'ΔP (m)',k:'_vd',v:calc&&item.pdrop!==undefined?item.pdrop.toFixed(3):'—',ro:true,out:true}
+    ];
+  } else if(t==='tank'){
+    flds=[
+      {l:'Label',k:'cl',v:item.cl,tp:'text'},
+      {l:'Elevation (m)',k:'elev',v:item.elev||0},
+      {l:`Static P (${pl()})`,k:'_sp',v:p2d(item.pbar||0),cvt:'pb'}
+    ];
+  } else if(t==='pump-booster'||t==='pump-lift'){
+    flds=[
+      {l:'Label',k:'cl',v:item.cl,tp:'text'},
+      {l:'Head m (empty = auto)',k:'hm',v:item.hm===null?'':item.hm,unk:item.hm===null,oR:calc&&item.hm===null?item.rH:undefined},
+      {l:`Design Flow (${fl()})`,k:'_fl',v:f2d(item.fls||1.5),cvt:'f'}
+    ];
+    if(t==='pump-lift')flds.push({l:'Lift elevation (m)',k:'liftElev',v:item.liftElev||10});
+    if(calc)flds.push({l:`Result head (${pl()})`,k:'_ph',v:p2d(m2b(item.rH||item.hm||0)),ro:true,out:true});
+    // pump curve section
+    const cb=document.createElement('div');cb.className='curve-box';
+    cb.innerHTML='<div class="pbox-t">Pump Curve Points</div>';
+    const clist=document.createElement('div');clist.id='curve-list';
+    function renderCurve(){
+      clist.innerHTML='';
+      (item.curvePoints||[]).forEach((pt,i)=>{
+        const row=document.createElement('div');row.className='curve-row';
+        row.innerHTML=`<span style="font-size:9px;color:#7a8494;min-width:18px">${i+1}.</span><input type="number" placeholder="Q L/s" value="${pt.q}" step="any" data-ci="${i}" data-cf="q"><input type="number" placeholder="H m" value="${pt.h}" step="any" data-ci="${i}" data-cf="h"><button style="background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:11px" data-di="${i}">✕</button>`;
+        clist.appendChild(row);
+      });
+      clist.querySelectorAll('input').forEach(inp=>{
+        inp.addEventListener('input',()=>{
+          const i=parseInt(inp.dataset.ci),cf=inp.dataset.cf;
+          if(!item.curvePoints[i])item.curvePoints[i]={q:0,h:0};
+          item.curvePoints[i][cf]=parseFloat(inp.value)||0;
+          draw();
+        });
+      });
+      clist.querySelectorAll('button[data-di]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          item.curvePoints.splice(parseInt(btn.dataset.di),1);
+          renderCurve();draw();
+        });
+      });
+    }
+    renderCurve();cb.appendChild(clist);
+    const addBtn=document.createElement('button');addBtn.className='curve-add';addBtn.textContent='+ Add point';
+    addBtn.onclick=()=>{if(!item.curvePoints)item.curvePoints=[];item.curvePoints.push({q:0,h:0});renderCurve();};
+    cb.appendChild(addBtn);
+    const flipBtn=document.createElement('button');flipBtn.className='xb g';flipBtn.textContent='⇄ Flip direction';
+    flipBtn.onclick=()=>{item.flip=!item.flip;draw();};
+    eb.appendChild(cb);eb.appendChild(flipBtn);
+  } else if(t==='pump-circ'){
+    flds=[
+      {l:'Label',k:'cl',v:item.cl,tp:'text'},
+      {l:'Head m (empty = auto)',k:'hm',v:item.hm===null?'':item.hm,unk:item.hm===null,oR:calc&&item.hm===null?item.rH:undefined}
+    ];
+    const mr=document.createElement('div');mr.className='fld';
+    mr.innerHTML=`<label>Flow calc method</label><select id="circ-m"><option value="fu" ${item.circMethod==='fu'?'selected':''}>Fixture Units</option><option value="risers" ${item.circMethod==='risers'?'selected':''}>No. of Risers</option><option value="heat" ${item.circMethod==='heat'?'selected':''}>Heat Loss (W)</option></select>`;
+    f.appendChild(mr);
+    document.getElementById('circ-m').onchange=function(){item.circMethod=this.value;saveProp();showProp(item);};
+    if(item.circMethod==='fu')flds.push({l:'Total FU',k:'circFU',v:item.circFU||50});
+    else if(item.circMethod==='risers')flds.push({l:'Number of risers',k:'circRisers',v:item.circRisers||5});
+    else flds.push({l:'Heat loss (W)',k:'circHeatLoss',v:item.circHeatLoss||500});
+    if(calc&&item.circFls!==undefined)flds.push({l:`Circ flow (${fl()})`,k:'_cf',v:f2d(item.circFls),ro:true,out:true,cl:'#34d399'});
+    const fb=document.createElement('button');fb.className='xb g';fb.textContent='⇄ Flip direction';
+    fb.onclick=()=>{item.flip=!item.flip;draw();};eb.appendChild(fb);
+  } else if(t==='outlet'){
+    const mr=document.createElement('div');mr.className='fld';
+    mr.innerHTML=`<label>Flow mode</label><select id="om"><option value="manual" ${item.fm==='manual'?'selected':''}>Manual</option><option value="fu" ${item.fm==='fu'?'selected':''}>Fixture Units (IPC)</option></select>`;
+    f.appendChild(mr);
+    document.getElementById('om').onchange=function(){item.fm=this.value;saveProp();showProp(item);};
+    const fl3=item.fm==='fu'?
+      [{l:'Label',k:'cl',v:item.cl,tp:'text'},{l:'Total FU',k:'fu',v:item.fu||6},{l:`Flow downstream`,k:'_fc',v:f2d(fu2ls(item.fu||6)),ro:true,out:true},{l:`Min residual (${pl()})`,k:'_r',v:p2d(item.rbar||1.5),cvt:'pr'},{l:'Elevation (m)',k:'elev',v:item.elev||0}]:
+      [{l:'Label',k:'cl',v:item.cl,tp:'text'},{l:`Flow downstream (${fl()})`,k:'_fl',v:f2d(item.fls||.3),cvt:'f'},{l:`Min residual (${pl()})`,k:'_r',v:p2d(item.rbar||1.5),cvt:'pr'},{l:'Elevation (m)',k:'elev',v:item.elev||0}];
+    if(calc&&item.rP!==undefined){
+      const ok2=item.rP>=(item.rbar||1.5);
+      fl3.push(
+        {l:'──',k:'_s',sep:true},
+        {l:`Static (${pl()})`,k:'_stp',v:item.sP!==undefined?p2d(item.sP):'—',ro:true,out:true,cl:'#4a8abf'},
+        {l:`Friction (${pl()})`,k:'_frl',v:item.fP!==undefined?p2d(item.fP):'—',ro:true,out:true,cl:'#a04040'},
+        {l:`Residual (${pl()})`,k:'_rp',v:p2d(item.rP),ro:true,out:true,wv:!ok2},
+        {l:`Flow downstream actual`,k:'_fda',v:item.flowDownstream!==undefined?f2d(item.flowDownstream):'—',ro:true,out:true,cl:'#22c55e'}
+      );
+    }
+    flds=fl3;
+  } else if(isHeat(t)){
+    flds=[
+      {l:'Label',k:'cl',v:item.cl,tp:'text'},
+      {l:'Pressure drop (m)',k:'pdm',v:item.pdm||3},
+      {l:'Inlet temp T_in (°C)',k:'Tin',v:item.Tin||80},
+      {l:'Outlet temp T_out (°C)',k:'Tout',v:item.Tout||60},
+      {l:'Mass flow ṁ (kg/s)',k:'mflow',v:item.mflow||1},
+      {l:'Cp fluid (kJ/kg·K)',k:'cpFluid',v:item.cpFluid||4.18}
+    ];
+    if(calc&&item.Qkw!==undefined)flds.push({l:'Heat transfer Q (kW)',k:'_q',v:item.Qkw.toFixed(2),ro:true,out:true,cl:'#fb923c'});
+  } else if(t==='junc'){
+    flds=[
+      {l:'Label',k:'cl',v:item.cl,tp:'text'},
+      {l:'Branch equip. loss (m)',k:'eqLoss',v:item.eqLoss||0},
+      {l:`P junction (${pl()})`,k:'_jp',v:calc&&item.rP!==undefined?p2d(item.rP):'—',ro:true,out:true}
+    ];
+  }
+
+  flds.forEach(fd2=>{
+    if(fd2.sep){const d=document.createElement('div');d.style='font-size:8px;color:#333;margin:3px 0;border-top:1px solid #252930;padding-top:3px';f.appendChild(d);return;}
+    const d=document.createElement('div');d.className='fld';
+    const tag=fd2.out&&calc?'<span class="to">OUT</span>':fd2.unk?'<span class="tu">AUTO</span>':'';
+    const cls=fd2.ro?(fd2.wv?'wf':'of'):fd2.unk?'uf':'';
+    const val=fd2.oR!==undefined?fd2.oR.toFixed(3):(fd2.v===null||fd2.v===undefined?'':fd2.v);
+    const sty=fd2.cl?`style="color:${fd2.cl}"`:'';
+    d.innerHTML=`<label ${sty}>${fd2.l} ${tag}</label><input type="${fd2.tp==='text'?'text':'number'}" data-key="${fd2.k}" data-cvt="${fd2.cvt||''}" value="${val}" step="any" ${fd2.ro?'readonly':''} class="${cls}">`;
+    f.appendChild(d);
+  });
+
+  const db=document.createElement('button');db.className='xb r';db.textContent='Delete';
+  db.onclick=()=>{
+    snapshot();
+    if(item.type&&item.type!=='valve'){
+      nodes=nodes.filter(n=>n!==item);
+      pipes.forEach(p=>{if(p.valve===item)p.valve=null;});
+      pipes=pipes.filter(p=>p.nA!==item&&p.nB!==item);
+    } else if(item.nA){
+      pipes=pipes.filter(p=>p!==item);
+    } else {
+      pipes.forEach(p=>{if(p.valve===item)p.valve=null;});
+    }
+    sel=null;selSet.clear();
+    document.getElementById('phint').style.display='';
+    document.getElementById('pprops').style.display='none';
+    calc=false;draw();
+  };
+  eb.appendChild(db);
+  document.querySelectorAll('#pfields input:not([readonly])').forEach(i=>i.addEventListener('input',()=>{saveProp();draw();}));
+}
+
+function saveProp(){
+  if(!sel)return;
+  document.querySelectorAll('#pfields input[data-key]:not([readonly])').forEach(inp=>{
+    const k=inp.dataset.key,cvt=inp.dataset.cvt,raw=inp.value.trim();
+    if(k==='cl'){sel.cl=raw;return;}
+    if(raw===''&&k==='hm'){sel.hm=null;return;}
+    const v=parseFloat(raw);if(isNaN(v))return;
+    if(cvt==='pb')sel.pbar=d2p(v);
+    else if(cvt==='pr')sel.rbar=d2p(v);
+    else if(cvt==='f')sel.fls=d2f(v);
+    else if(k==='fu'){sel.fu=v;sel.fls=fu2ls(v);}
+    else sel[k]=v;
+  });
+  const om=document.getElementById('om');
+  if(om&&sel.type==='outlet'&&sel.fm==='fu')sel.fls=fu2ls(sel.fu||6);
+}
+
+function selItem(item){
+  saveProp();sel=item;
+  if(!item){
+    document.getElementById('phint').style.display='';
+    document.getElementById('pprops').style.display='none';
+  } else showProp(item);
+  draw();
+}
+
+function setMode(m){
+  mode=m;pipeSt=null;
+  ['bsel','bpip','bvlv'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  if(m==='sel')document.getElementById('bsel').classList.add('on');
+  if(m==='pip')document.getElementById('bpip').classList.add('on');
+  if(m==='vlv')document.getElementById('bvlv').classList.add('on');
+  document.getElementById('mtag').textContent={sel:'select',pip:'draw pipe',vlv:'valve on pipe'}[m]||m;
+  cv.style.cursor=m==='sel'?'default':'crosshair';
+  const hint=document.getElementById('multi-hint');
+  hint.style.display=m==='sel'?'block':'none';
+}
+
+// ═══════════════════════════════════════════════════
+//  ZOOM / PAN
+// ═══════════════════════════════════════════════════
+function doZoom(delta,cx,cy){
+  const bw=s2w(cx,cy);zoom=Math.max(.08,Math.min(8,zoom*delta));
+  const aw=w2s(bw.x,bw.y);panX+=cx-aw.x;panY+=cy-aw.y;draw();
+}
+wrap.addEventListener('wheel',e=>{e.preventDefault();const r=cv.getBoundingClientRect();doZoom(e.deltaY<0?1.12:.9,e.clientX-r.left,e.clientY-r.top);},{passive:false});
+document.getElementById('zin').onclick=()=>doZoom(1.2,W/2,H/2);
+document.getElementById('zout').onclick=()=>doZoom(1/1.2,W/2,H/2);
+document.getElementById('zrst').onclick=()=>{zoom=1;panX=0;panY=0;draw();};
+
+// ═══════════════════════════════════════════════════
+//  KEYBOARD
+// ═══════════════════════════════════════════════════
+let spaceHeld=false;
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'&&!e.target.matches('input,select,textarea')){spaceHeld=true;if(mode==='sel')cv.style.cursor='grab';}
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='z'&&!e.target.matches('input,select,textarea')){e.preventDefault();undo();}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key==='z'))&&!e.target.matches('input,select,textarea')){e.preventDefault();redo();}
+  if(e.key==='Escape'){selSet.clear();selItem(null);}
+  if(e.key==='Delete'&&sel&&!e.target.matches('input,select,textarea')){
+    document.querySelector('#pbtns .xb.r')?.click();
+  }
+});
+document.addEventListener('keyup',e=>{if(e.code==='Space'){spaceHeld=false;if(mode==='sel')cv.style.cursor='default';}});
+
+// ═══════════════════════════════════════════════════
+//  MOUSE EVENTS
+// ═══════════════════════════════════════════════════
+let mouseDownTime=0,mouseDownPos={x:0,y:0};
+
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect();mp={x:e.clientX-r.left,y:e.clientY-r.top};
+  if(isPanning){panX+=mp.x-panStart.x;panY+=mp.y-panStart.y;panStart={...mp};draw();return;}
+  if(mode==='pip'&&pipeSt)draw();
+  // drag single
+  if(drag&&!spaceHeld&&selSet.size<=1){
+    const{x:wx,y:wy}=s2w(mp.x-doff.x,mp.y-doff.y);
+    drag.wx=Math.round(wx/20)*20;drag.wy=Math.round(wy/20)*20;
+    if(sel===drag)showProp(drag);draw();return;
+  }
+  // drag multiple
+  if(multiDragStart&&selSet.size>1){
+    const dx=(mp.x-multiDragStart.x)/zoom,dy=(mp.y-multiDragStart.y)/zoom;
+    selSet.forEach((item,idx)=>{
+      if(item.type&&item.type!=='valve'){
+        const off=multiDragOffsets[idx]||{dx:0,dy:0};
+        item.wx=Math.round((off.ox+dx)/20)*20;
+        item.wy=Math.round((off.oy+dy)/20)*20;
+      }
+    });
+    draw();return;
+  }
+  // box select
+  if(boxSelecting){boxEnd={x:mp.x,y:mp.y};drawSelBox();draw();return;}
+});
+
+cv.addEventListener('mousedown',e=>{
+  const r=cv.getBoundingClientRect();const sx=e.clientX-r.left,sy=e.clientY-r.top;
+  mp={x:sx,y:sy};mouseDownTime=Date.now();mouseDownPos={x:sx,y:sy};
+  if(e.button===1||spaceHeld){isPanning=true;panStart={x:sx,y:sy};cv.style.cursor='grabbing';return;}
+  if(mode==='sel'){
+    const v=hitValve(sx,sy);
+    if(v){
+      if(e.shiftKey){selSet.has(v)?selSet.delete(v):selSet.add(v);sel=v;showProp(v);draw();}
+      else{selSet.clear();selItem(v);}return;
+    }
+    const n=hitN(sx,sy);
+    if(n){
+      if(e.shiftKey){selSet.has(n)?selSet.delete(n):selSet.add(n);sel=n;showProp(n);draw();}
+      else{
+        if(!selSet.has(n)){selSet.clear();}
+        selItem(n);
+        if(selSet.size>1){
+          // multi drag
+          multiDragStart={x:sx,y:sy};
+          const arr=[...selSet];
+          multiDragOffsets=arr.map(item=>({ox:item.wx,oy:item.wy}));
+        } else {
+          drag=n;const ns=w2s(n.wx,n.wy);doff={x:sx-ns.x,y:sy-ns.y};
+        }
+      }return;
+    }
+    const ph=hitPipe(sx,sy);
+    if(ph){
+      if(e.shiftKey){selSet.has(ph.pipe)?selSet.delete(ph.pipe):selSet.add(ph.pipe);}
+      else{selSet.clear();}
+      selItem(ph.pipe);return;
+    }
+    // start box select
+    if(!e.shiftKey)selSet.clear();
+    selItem(null);
+    boxSelecting=true;boxStart={x:sx,y:sy};boxEnd={x:sx,y:sy};
+    return;
+  }
+  if(mode==='vlv'){
+    const ph=hitPipe(sx,sy);
+    if(ph&&!ph.pipe.valve){
+      snapshot();
+      const v=mkN('valve',0,0);
+      ph.pipe.valve=v;
+      // valve node is still tracked in nodes for property editing, but NOT drawn standalone
+      nodes.push(v);
+      selSet.clear();selItem(v);setMode('sel');draw();
+    }return;
+  }
+  if(mode==='pip'){
+    if(!pipeSt){
+      const n=hitN(sx,sy);if(n){pipeSt=n;return;}
+      const ph=hitPipe(sx,sy);
+      if(ph){snapshot();const j=splitPipe(ph.pipe,ph.wx,ph.wy);pipeSt=j;draw();return;}
+      return;
+    }
+    const n2=hitN(sx,sy,pipeSt);
+    if(n2){snapshot();pipes.push({id:uid(),nA:pipeSt,nB:n2,dia:25,len:10});pipeSt=null;setMode('pip');draw();return;}
+    const ph=hitPipe(sx,sy);
+    if(ph){snapshot();const j=splitPipe(ph.pipe,ph.wx,ph.wy);pipes.push({id:uid(),nA:pipeSt,nB:j,dia:25,len:10});pipeSt=null;setMode('pip');draw();return;}
+    snapshot();const{x:wx,y:wy}=s2w(Math.round(sx/20)*20,Math.round(sy/20)*20);
+    const j=mkN('junc',wx,wy);nodes.push(j);pipes.push({id:uid(),nA:pipeSt,nB:j,dia:25,len:10});pipeSt=j;draw();
+  }
+});
+
+cv.addEventListener('mouseup',e=>{
+  if(isPanning){isPanning=false;cv.style.cursor=mode==='sel'?'default':'crosshair';}
+  if(multiDragStart){snapshot();multiDragStart=null;multiDragOffsets=[];}
+  if(drag){drag=null;}
+  if(boxSelecting){
+    boxSelecting=false;
+    document.getElementById('sel-box').style.display='none';
+    const x1=Math.min(boxStart.x,boxEnd.x),y1=Math.min(boxStart.y,boxEnd.y);
+    const x2=Math.max(boxStart.x,boxEnd.x),y2=Math.max(boxStart.y,boxEnd.y);
+    if(x2-x1>5||y2-y1>5){
+      const found=nodesInBox(x1,y1,x2,y2);
+      found.forEach(n=>selSet.add(n));
+      if(found.length===1){sel=found[0];showProp(found[0]);}
+      else if(found.length>1){sel=null;document.getElementById('phint').style.display='';document.getElementById('pprops').style.display='none';}
+      draw();
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════
+//  DRAG FROM LIBRARY
+// ═══════════════════════════════════════════════════
+let ld=null;
+document.querySelectorAll('.li').forEach(el=>{
+  el.addEventListener('dragstart',e=>{ld=el.dataset.type;e.dataTransfer.effectAllowed='copy';});
+  el.addEventListener('dragend',()=>{ld=null;});
+});
+const cvW=document.getElementById('cvwrap');
+cvW.addEventListener('dragover',e=>e.preventDefault());
+cvW.addEventListener('drop',e=>{
+  e.preventDefault();if(!ld)return;
+  snapshot();
+  const r=cv.getBoundingClientRect();
+  const{x:wx,y:wy}=s2w(e.clientX-r.left,e.clientY-r.top);
+  const n=mkN(ld,Math.round(wx/20)*20,Math.round(wy/20)*20);
+  nodes.push(n);selSet.clear();selItem(n);draw();ld=null;
+});
+
+// ═══════════════════════════════════════════════════
+//  BUTTON BINDINGS
+// ═══════════════════════════════════════════════════
+document.getElementById('bsel').onclick=()=>setMode('sel');
+document.getElementById('bpip').onclick=()=>setMode('pip');
+document.getElementById('bvlv').onclick=()=>setMode('vlv');
+document.getElementById('bcalc').onclick=calculate;
+document.getElementById('bundo').onclick=undo;
+document.getElementById('bredo').onclick=redo;
+document.getElementById('bclr').onclick=()=>{
+  snapshot();nodes=[];pipes=[];sel=null;selSet.clear();ncnt={};calc=false;
+  document.getElementById('phint').style.display='';
+  document.getElementById('pprops').style.display='none';
+  document.getElementById('rp-results').style.display='none';draw();
+};
+document.getElementById('fsl').addEventListener('input',function(){document.getElementById('fval').textContent=this.value+'%';});
+document.getElementById('calc-method').addEventListener('change',function(){
+  if(this.value==='hw'){document.getElementById('rot-set').style.display='none';document.getElementById('hw-set').style.display='';}
+  else{document.getElementById('rot-set').style.display='';document.getElementById('hw-set').style.display='none';}
+});
+document.getElementById('up').addEventListener('change',()=>{if(sel)showProp(sel);draw();});
+document.getElementById('uf').addEventListener('change',()=>{if(sel)showProp(sel);draw();});
+
+// ═══════════════════════════════════════════════════
+//  EXPORT PDF REPORT
+// ═══════════════════════════════════════════════════
+document.getElementById('bexport').onclick=function(){
+  const W2=800,H2=1130;
+  const off=document.createElement('canvas');off.width=W2;off.height=H2;
+  const c2=off.getContext('2d');
+
+  // background
+  c2.fillStyle='#0b0c0e';c2.fillRect(0,0,W2,H2);
+
+  // header strip
+  const grad=c2.createLinearGradient(0,0,W2,0);
+  grad.addColorStop(0,'#1a3a6e');grad.addColorStop(1,'#0b0c0e');
+  c2.fillStyle=grad;c2.fillRect(0,0,W2,72);
+  c2.fillStyle='#3b82f6';c2.fillRect(0,0,5,72);
+
+  c2.font='bold 22px Segoe UI,sans-serif';c2.fillStyle='#e2e8f0';c2.textAlign='left';c2.textBaseline='middle';
+  c2.fillText('Hydraulic P&ID — Calculation Report',24,28);
+  c2.font='12px Segoe UI,sans-serif';c2.fillStyle='#64748b';
+  c2.fillText('Generated: '+new Date().toLocaleString(),24,52);
+
+  // canvas snapshot
+  const snap=document.createElement('canvas');snap.width=cv.width;snap.height=cv.height;
+  const sc2=snap.getContext('2d');sc2.drawImage(cv,0,0);
+  const scale=Math.min((W2-40)/snap.width,320/snap.height);
+  const sw=snap.width*scale,sh=snap.height*scale;
+  c2.strokeStyle='#252930';c2.lineWidth=1;c2.strokeRect(20,80,W2-40,sh+4);
+  c2.drawImage(snap,20,82,sw,sh);
+
+  let y=82+sh+30;
+
+  // results text
+  function row(label,value,color){
+    c2.fillStyle='#1e2228';c2.fillRect(20,y-2,W2-40,20);
+    c2.font='11px Segoe UI,sans-serif';c2.fillStyle='#7a8494';c2.textAlign='left';c2.textBaseline='middle';
+    c2.fillText(label,28,y+8);
+    c2.font='bold 11px Segoe UI,sans-serif';c2.fillStyle=color||'#c8cdd6';c2.textAlign='right';
+    c2.fillText(value,W2-28,y+8);
+    y+=22;
+  }
+  function section(title){
+    y+=8;
+    c2.fillStyle='#252930';c2.fillRect(20,y,W2-40,22);
+    c2.fillStyle='#3b82f6';c2.fillRect(20,y,4,22);
+    c2.font='bold 11px Segoe UI,sans-serif';c2.fillStyle='#60a5fa';c2.textAlign='left';c2.textBaseline='middle';
+    c2.fillText(title.toUpperCase(),30,y+11);
+    y+=26;
+  }
+
+  section('Nodes');
+  nodes.filter(n=>n.type!=='valve').forEach(n=>{
+    const lbl=n.cl||n.label;
+    const pStr=n.rP!==undefined?pd(n.rP):'—';
+    row(lbl+' ('+n.type+')',pStr,n.type==='outlet'?'#22c55e':'#c8cdd6');
+  });
+
+  section('Pipes');
+  pipes.forEach((p,i)=>{
+    if(!p.nA||!p.nB)return;
+    const v=p.vel!==undefined?p.vel.toFixed(2)+'m/s':'—';
+    const q=p.fls!==undefined?fd(p.fls):'—';
+    row(`Pipe ${i+1}: Ø${p.dia||25}mm / ${p.len||10}m`,`${q} · v=${v} · ΔH=${(p.hL||0).toFixed(2)}m`,p.vel>2.4?'#ef4444':p.vel>1.2?'#22c55e':'#60a5fa');
+  });
+
+  if(calc){
+    section('Summary');
+    const method=document.getElementById('calc-method').value;
+    const hwC=parseInt(document.getElementById('hw-c').value)||130;
+    const fric=parseFloat(document.getElementById('fsl').value);
+    row('Calc Method',method==='hw'?`Hazen-Williams C=${hwC}`:`Approx ${fric}% +25%`,'#60a5fa');
+    const outlets=nodes.filter(n=>n.type==='outlet');
+    const minOutP=outlets.length?Math.min(...outlets.map(o=>o.rP||0)):0;
+    const minReq=outlets.length?Math.min(...outlets.map(o=>o.rbar||1.5)):1.5;
+    const ok=minOutP>=minReq,wn=!ok&&minOutP>=minReq*.7;
+    row('System Status',ok?'✓ OK':wn?'⚠ Low Pressure':'✗ Failure',ok?'#22c55e':wn?'#eab308':'#ef4444');
+  }
+
+  // footer
+  c2.fillStyle='#1e2228';c2.fillRect(0,H2-36,W2,36);
+  c2.font='10px Segoe UI,sans-serif';c2.fillStyle='#374151';c2.textAlign='center';c2.textBaseline='middle';
+  c2.fillText('Hydraulic P&ID Tool — MEP Consultant Report',W2/2,H2-18);
+
+  // download
+  const a=document.createElement('a');a.download='hydraulic_report.png';
+  a.href=off.toDataURL('image/png',1.0);a.click();
+};
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+updateUndoRedo();
+snapshot();
+rsz();
+</script>
+</body>
+</html>
