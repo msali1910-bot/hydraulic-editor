@@ -194,3 +194,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans
 /* ── NOTE inline editor ── */
 #note-editor{position:absolute;display:none;z-index:200;background:var(--bg2);border:1.5px solid var(--blue);border-radius:5px;box-shadow:var(--shadow2);padding:0}
 #note-editor textarea{border:none;outline:none;background:transparent;font-size:12px;color:var(--txt);padding:6px 8px;resize:both;min-width:120px;min-height:36px;font-family:'Segoe UI',sans-serif;display:block}
+
+/* ── UNITS POPUP ── */
+.uopt{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--txt2);padding:4px 6px;border-radius:5px;cursor:pointer;margin-bottom:2px}
+.uopt:hover{background:var(--bg4)}
+.uopt input[type=radio]{accent-color:var(--blue);width:13px;height:13px;flex-shrink:0}
+.uopt input[type=radio]:checked+*{color:var(--blue);font-weight:600}

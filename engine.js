@@ -254,11 +254,14 @@ const TC={
   'valve':{s:'#d97706',f:'#fffbeb',label:'V'},
   'outlet':{s:'#2f9e44',f:'#ebfbee',label:'OUT'},
   'junc':{s:'#1971c2',f:'#e7f5ff',label:'·'},
-  'note':{s:'#6b7280',f:'#f9fafb',label:'NOTE'}
+  'note':{s:'#6b7280',f:'#f9fafb',label:'NOTE'},
+  'boiler':{s:'#e8590c',f:'#fff4e6',label:'BWB'},
+  'filter':{s:'#2f9e44',f:'#ebfbee',label:'FLT'},
+  'uv':{s:'#7048e8',f:'#f3f0ff',label:'UV'}
 };
 function isValveType(t){return t&&(t==='valve'||t.startsWith('valve-'));}
 function isPump(t){return t==='pump-booster'||t==='pump-lift'||t==='pump-circ';}
-function isHeat(t){return t==='hex'||t==='calorifier';}
+function isHeat(t){return t==='hex'||t==='calorifier'||t==='boiler';}
 
 function mkN(type,wx,wy){
   // valve-gate, valve-ball etc → stored as type='valve', valveType='gate' etc
@@ -277,6 +280,9 @@ function mkN(type,wx,wy){
   if(realType==='hex'||realType==='calorifier')return{...b,pdm:3,Tin:80,Tout:60,mflow:1,cpFluid:4.18,Qkw:undefined};
   if(realType==='junc')return{...b,eqLoss:0};
   if(realType==='note')return{...b,text:'Double-click to edit',fontSize:12};
+  if(realType==='boiler')return{...b,pdm:3,Tin:80,Tout:60,mflow:1,cpFluid:4.18,Qkw:undefined};
+  if(realType==='filter')return{...b,pdm:1.5,filterType:'sand'};
+  if(realType==='uv')return{...b,pdm:0.5};
   return b;
 }
 
@@ -294,7 +300,7 @@ function nColor(n){
   const c=TC[n.type]||{s:'#888',f:'#eee'};
   // In dark mode invert fill/stroke interpretation
   if(isDark()){
-    const dm={'tank':{s:'#a3e635',f:'#081500'},'pump-booster':{s:'#60a5fa',f:'#080f1a'},'pump-lift':{s:'#a78bfa',f:'#0c0a1a'},'pump-circ':{s:'#34d399',f:'#041a10'},'hex':{s:'#f97316',f:'#160800'},'calorifier':{s:'#fb923c',f:'#160a00'},'valve':{s:'#facc15',f:'#161000'},'outlet':{s:'#22c55e',f:'#051a0a'},'junc':{s:'#60a5fa',f:'#001a30'},'note':{s:'#9ca3af',f:'#1a1c20'}};
+    const dm={'tank':{s:'#a3e635',f:'#081500'},'pump-booster':{s:'#60a5fa',f:'#080f1a'},'pump-lift':{s:'#a78bfa',f:'#0c0a1a'},'pump-circ':{s:'#34d399',f:'#041a10'},'hex':{s:'#f97316',f:'#160800'},'calorifier':{s:'#fb923c',f:'#160a00'},'valve':{s:'#facc15',f:'#161000'},'outlet':{s:'#22c55e',f:'#051a0a'},'junc':{s:'#60a5fa',f:'#001a30'},'note':{s:'#9ca3af',f:'#1a1c20'},'boiler':{s:'#fb923c',f:'#160800'},'filter':{s:'#4ade80',f:'#071a04'},'uv':{s:'#c084fc',f:'#1e1535'}};
     return dm[n.type]||{s:c.s,f:'#111'};
   }
   if(!calc)return c;
@@ -342,19 +348,33 @@ function drawValveSymbol(x,y,ang,vt,isSel,dark){
     ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(0,7);ctx.stroke();
     ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(0,-12);ctx.moveTo(-4,-12);ctx.lineTo(4,-12);ctx.stroke();
   } else if(vt==='relief'){
+    // PRV: triangle pointing right + spring on top (IEC/BS symbol)
     ctx.strokeStyle=isSel?'#fff':(dark?'#f87171':'#e03131');
-    ctx.fillStyle=isSel?'rgba(255,255,255,.1)':(dark?'#1a0404':'#fff5f5');
-    ctx.beginPath();ctx.moveTo(-12,-7);ctx.lineTo(6,0);ctx.lineTo(-12,7);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(6,-7);ctx.lineTo(6,0);ctx.stroke();
-    ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(3,-11);ctx.quadraticCurveTo(6,-7,9,-11);ctx.stroke();
+    ctx.fillStyle=isSel?'rgba(255,255,255,.15)':(dark?'#2a0d0d':'#fff5f5');
+    // body triangle
+    ctx.beginPath();ctx.moveTo(-11,-7);ctx.lineTo(9,0);ctx.lineTo(-11,7);ctx.closePath();ctx.fill();ctx.stroke();
+    // closing line
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(9,-8);ctx.lineTo(9,8);ctx.stroke();
+    // spring coils above
+    ctx.lineWidth=1.2;
+    ctx.beginPath();
+    ctx.moveTo(-1,-8);
+    for(let i=0;i<3;i++){ctx.lineTo(-1+3*(i*2+1),-12);ctx.lineTo(-1+3*(i*2+2),-8);}
+    ctx.stroke();
+    // top cap
+    ctx.beginPath();ctx.moveTo(-2,-12);ctx.lineTo(16,-12);ctx.stroke();
   } else if(vt==='reducing'){
+    // PRS: box with globe valve inside (diaphragm symbol)
     ctx.strokeStyle=isSel?'#fff':(dark?'#c084fc':'#7048e8');
-    ctx.fillStyle=isSel?'rgba(255,255,255,.1)':(dark?'#1e1535':'#f3f0ff');
-    ctx.beginPath();ctx.rect(-14,-8,28,16);ctx.fill();ctx.stroke();
-    ctx.strokeStyle=isSel?'#fff':(dark?'#c084fc':'#7048e8');ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(-10,-5);ctx.lineTo(0,0);ctx.lineTo(-10,5);ctx.closePath();ctx.stroke();
-    ctx.beginPath();ctx.moveTo(10,-5);ctx.lineTo(0,0);ctx.lineTo(10,5);ctx.closePath();ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(0,5);ctx.stroke();
+    ctx.fillStyle=isSel?'rgba(255,255,255,.08)':(dark?'#1e1535':'#f3f0ff');
+    // outer box
+    ctx.lineWidth=1.3;ctx.beginPath();ctx.rect(-14,-9,28,18);ctx.fill();ctx.stroke();
+    // globe valve triangle inside
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(-8,-6);ctx.lineTo(4,0);ctx.lineTo(-8,6);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(4,-6);ctx.lineTo(4,6);ctx.stroke();
+    // diaphragm circle
+    ctx.beginPath();ctx.arc(4,-8,3,0,Math.PI*2);ctx.fill();ctx.stroke();
   }
   ctx.restore();
 }
@@ -449,6 +469,46 @@ function drawNode(n){
     ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y-13);ctx.lineTo(x,y-19);ctx.moveTo(x,y+13);ctx.lineTo(x,y+19);ctx.stroke();
   } else if(t==='junc'){
     ctx.fillStyle=c.s;ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
+  } else if(t==='boiler'){
+    // Hot water boiler: horizontal cylinder with burner base
+    ctx.beginPath();ctx.ellipse(x,y,22,13,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // top nozzle
+    ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-4,y-13);ctx.lineTo(x-4,y-19);ctx.moveTo(x+4,y-13);ctx.lineTo(x+4,y-19);ctx.stroke();
+    // flame symbol
+    ctx.lineWidth=1.2;ctx.beginPath();
+    ctx.moveTo(x,y+8);ctx.quadraticCurveTo(x-6,y+3,x-3,y-2);ctx.quadraticCurveTo(x,y+1,x,y-5);ctx.quadraticCurveTo(x+3,y+1,x+3,y-2);ctx.quadraticCurveTo(x+6,y+3,x,y+8);
+    ctx.fillStyle=isDark()?'#f97316':'#ea580c';ctx.fill();ctx.strokeStyle=c.s;ctx.stroke();
+    // base
+    ctx.fillStyle=c.f;ctx.strokeStyle=c.s;ctx.lineWidth=1.3;
+    ctx.beginPath();ctx.rect(x-14,y+13,28,6);ctx.fill();ctx.stroke();
+    // connections
+    ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y-19);ctx.lineTo(x,y-25);ctx.moveTo(x,y+19);ctx.lineTo(x,y+25);ctx.stroke();
+    if(zoom>0.4){ctx.font='bold 6px sans-serif';ctx.fillStyle=c.s;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('BWB',x,y+5);}
+  } else if(t==='filter'){
+    // Sand filter: vertical cylinder with hatching inside
+    const fw=16,fh=24;
+    ctx.beginPath();ctx.ellipse(x,y-fh/2,fw,5,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x-fw,y-fh/2);ctx.lineTo(x-fw,y+fh/2);ctx.moveTo(x+fw,y-fh/2);ctx.lineTo(x+fw,y+fh/2);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(x,y+fh/2,fw,5,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // sand hatch
+    ctx.lineWidth=.7;ctx.strokeStyle=isDark()?'#4ade80':'#2f9e44';
+    for(let i=-3;i<=3;i++){ctx.beginPath();ctx.moveTo(x+i*4,y-fh/2+6);ctx.lineTo(x+i*4,y+fh/2-6);ctx.stroke();}
+    ctx.lineWidth=1.3;ctx.strokeStyle=c.s;
+    // pipe connections
+    ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-fw,y-8);ctx.lineTo(x-fw-8,y-8);ctx.moveTo(x-fw,y+8);ctx.lineTo(x-fw-8,y+8);ctx.stroke();
+    if(zoom>0.4){ctx.font='bold 6px sans-serif';ctx.fillStyle=c.s;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('FLT',x,y);}
+  } else if(t==='uv'){
+    // UV unit: tube with radiation lines
+    const uw=20,uh=8;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x-uw,y-uh,uw*2,uh*2,uh);else ctx.rect(x-uw,y-uh,uw*2,uh*2);ctx.fill();ctx.stroke();
+    // radiation lines
+    ctx.strokeStyle=isDark()?'#c084fc':'#7048e8';ctx.lineWidth=1.2;
+    const rays=[[-12,-12],[0,-14],[12,-12],[-12,12],[0,14],[12,12]];
+    rays.forEach(([dx,dy])=>{ctx.beginPath();ctx.moveTo(x+dx*.5,y+dy*.5);ctx.lineTo(x+dx,y+dy);ctx.stroke();});
+    // pipe connectors
+    ctx.strokeStyle=c.s;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(x-uw,y);ctx.lineTo(x-uw-8,y);ctx.moveTo(x+uw,y);ctx.lineTo(x+uw+8,y);ctx.stroke();
+    if(zoom>0.4){ctx.font='bold 6.5px sans-serif';ctx.fillStyle=c.s;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('UV',x,y);}
   }
 
   if(isSel&&t!=='note'){
@@ -476,16 +536,10 @@ function drawNode(n){
 
 // ── DRAW GRID ──────────────────────────────────────────────
 function drawGrid(){
+  // Clean canvas — no grid
   const dark=isDark();
-  ctx.fillStyle=dark?'var(--canvas-bg)':'#f4f5f7';
-  ctx.fillStyle=dark?'#080a0d':'#f4f5f7';ctx.fillRect(0,0,W,H);
-  const step=GRID_STEP*zoom,ox=((panX%step)+step)%step,oy=((panY%step)+step)%step;
-  ctx.fillStyle=dark?'#1e2530':'#d1d5db';
-  for(let x=ox;x<W;x+=step)for(let y=oy;y<H;y+=step)ctx.fillRect(x-1,y-1,2,2);
-  const step5=step*5,ox5=((panX%step5)+step5)%step5,oy5=((panY%step5)+step5)%step5;
-  ctx.strokeStyle=dark?'#181e28':'#dde1e7';ctx.lineWidth=.5;ctx.setLineDash([]);
-  for(let x=ox5;x<W;x+=step5){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(let y=oy5;y<H;y+=step5){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.fillStyle=dark?'#080a0d':'#f8f9fa';
+  ctx.fillRect(0,0,W,H);
 }
 
 function drawSelBox(){

@@ -66,16 +66,16 @@
 
   <!-- Right: Units + Dark toggle -->
   <div id="hdr-right">
-    <span class="units-lbl">Units:</span>
-    <select id="units-system" class="hdr-sel" title="Unit system">
-      <option value="si_m">SI (m H₂O / L/s)</option>
-      <option value="si_bar">SI (bar / m³/h)</option>
-      <option value="si_kpa">SI (kPa / L/s)</option>
-      <option value="imperial">Imperial (psi / gpm)</option>
-    </select>
-    <button class="tb tb-dark" id="bdark" title="Toggle dark mode" style="min-width:32px">
-      <svg id="dark-icon" width="14" height="14" viewBox="0 0 14 14"><path d="M7 2C4.2 2 2 4.2 2 7C2 9.8 4.2 12 7 12C9.8 12 12 9.8 12 7C12 4.2 9.8 2 7 2Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2.5" fill="currentColor"/></svg>
+    <button class="tb" id="bunits" title="Configure units" style="gap:5px">
+      <svg width="13" height="13" viewBox="0 0 13 13"><rect x="1" y="2" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/><line x1="1" y1="5" x2="12" y2="5" stroke="currentColor" stroke-width="1"/><line x1="4.5" y1="5" x2="4.5" y2="11" stroke="currentColor" stroke-width="1"/></svg>
+      Units
     </button>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+      <button class="tb tb-dark" id="bdark" title="Toggle dark mode" style="min-width:32px;padding:4px 8px">
+        <svg id="dark-icon" width="14" height="14" viewBox="0 0 14 14"><path d="M7 2C4.2 2 2 4.2 2 7C2 9.8 4.2 12 7 12C9.8 12 12 9.8 12 7C12 4.2 9.8 2 7 2Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2.5" fill="currentColor"/></svg>
+      </button>
+      <span id="dark-lbl" style="font-size:8px;color:var(--txt3);letter-spacing:.04em;white-space:nowrap">Light</span>
+    </div>
   </div>
 </div>
 
@@ -121,6 +121,49 @@
         <div class="li" draggable="true" data-type="calorifier">
           <svg width="38" height="28" viewBox="0 0 44 28" fill="none"><ellipse cx="22" cy="14" rx="14" ry="11" stroke="#e8590c" stroke-width="1.3" fill="#fff4e6"/><path d="M14 18 Q22 5 30 18" stroke="#e8590c" stroke-width="1.4" fill="none"/><line x1="1" y1="14" x2="8" y2="14" stroke="#e8590c" stroke-width="1.5"/><line x1="36" y1="14" x2="43" y2="14" stroke="#e8590c" stroke-width="1.5"/></svg>
           <span>Calorifier</span>
+        </div>
+        <div class="li" draggable="true" data-type="boiler">
+          <svg width="38" height="32" viewBox="0 0 50 40" fill="none">
+            <ellipse cx="25" cy="18" rx="18" ry="13" stroke="#e8590c" stroke-width="1.4" fill="#fff4e6"/>
+            <path d="M19 22 Q17 15 21 10 Q23 14 23 10 Q26 14 26 8 Q29 14 29 10 Q33 14 31 22" stroke="#ea580c" stroke-width="1.2" fill="#fbbf24" opacity=".7"/>
+            <line x1="17" y1="4" x2="17" y2="1" stroke="#e8590c" stroke-width="1.4"/>
+            <line x1="25" y1="5" x2="25" y2="1" stroke="#e8590c" stroke-width="1.4"/>
+            <line x1="33" y1="4" x2="33" y2="1" stroke="#e8590c" stroke-width="1.4"/>
+            <rect x="11" y="31" width="28" height="7" rx="1" stroke="#e8590c" stroke-width="1.2" fill="#fed7aa"/>
+            <line x1="1" y1="18" x2="7" y2="18" stroke="#e8590c" stroke-width="1.5"/>
+            <line x1="43" y1="18" x2="49" y2="18" stroke="#e8590c" stroke-width="1.5"/>
+          </svg>
+          <span>Boiler</span>
+        </div>
+        <div class="li" draggable="true" data-type="filter">
+          <svg width="38" height="32" viewBox="0 0 44 40" fill="none">
+            <ellipse cx="22" cy="8" rx="14" ry="5" stroke="#2f9e44" stroke-width="1.3" fill="#ebfbee"/>
+            <rect x="8" y="8" width="28" height="24" fill="#ebfbee" stroke="#2f9e44" stroke-width="1.3"/>
+            <ellipse cx="22" cy="32" rx="14" ry="5" stroke="#2f9e44" stroke-width="1.3" fill="#d3f9d8"/>
+            <line x1="15" y1="12" x2="15" y2="28" stroke="#2f9e44" stroke-width=".8"/>
+            <line x1="19" y1="12" x2="19" y2="28" stroke="#2f9e44" stroke-width=".8"/>
+            <line x1="23" y1="12" x2="23" y2="28" stroke="#2f9e44" stroke-width=".8"/>
+            <line x1="27" y1="12" x2="27" y2="28" stroke="#2f9e44" stroke-width=".8"/>
+            <line x1="31" y1="12" x2="31" y2="28" stroke="#2f9e44" stroke-width=".8"/>
+          </svg>
+          <span>Sand Filter</span>
+        </div>
+        <div class="li" draggable="true" data-type="uv">
+          <svg width="38" height="24" viewBox="0 0 50 28" fill="none">
+            <rect x="5" y="8" width="40" height="12" rx="6" stroke="#7048e8" stroke-width="1.4" fill="#f3f0ff"/>
+            <line x1="1" y1="14" x2="5" y2="14" stroke="#7048e8" stroke-width="1.5"/>
+            <line x1="45" y1="14" x2="49" y2="14" stroke="#7048e8" stroke-width="1.5"/>
+            <line x1="12" y1="2" x2="12" y2="6" stroke="#7048e8" stroke-width="1.2"/>
+            <line x1="18" y1="1" x2="18" y2="6" stroke="#7048e8" stroke-width="1.2"/>
+            <line x1="24" y1="1" x2="24" y2="6" stroke="#7048e8" stroke-width="1.2"/>
+            <line x1="30" y1="1" x2="30" y2="6" stroke="#7048e8" stroke-width="1.2"/>
+            <line x1="36" y1="2" x2="36" y2="6" stroke="#7048e8" stroke-width="1.2"/>
+            <line x1="12" y1="22" x2="12" y2="26" stroke="#7048e8" stroke-width="1.2"/>
+            <line x1="24" y1="22" x2="24" y2="27" stroke="#7048e8" stroke-width="1.2"/>
+            <line x1="36" y1="22" x2="36" y2="26" stroke="#7048e8" stroke-width="1.2"/>
+            <text x="25" y="16" text-anchor="middle" fill="#7048e8" font-size="7" font-family="sans-serif" dominant-baseline="middle">UV</text>
+          </svg>
+          <span>Ultraviolet</span>
         </div>
         <div class="li" draggable="true" data-type="outlet">
           <svg width="38" height="28" viewBox="0 0 44 28" fill="none"><circle cx="22" cy="14" r="10" stroke="#2f9e44" stroke-width="1.5" fill="#ebfbee"/><line x1="14" y1="14" x2="30" y2="14" stroke="#2f9e44" stroke-width="1.4"/><line x1="22" y1="6" x2="22" y2="22" stroke="#2f9e44" stroke-width="1.4"/><circle cx="22" cy="14" r="3" fill="#2f9e44"/></svg>
@@ -348,6 +391,54 @@
 </div>
 
 </div><!-- /app -->
+<!-- UNITS POPUP -->
+<div id="units-popup" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.35);backdrop-filter:blur(2px)" onclick="if(event.target===this)closeUnits()">
+  <div id="units-box" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--brd);border-radius:10px;width:420px;box-shadow:0 8px 32px rgba(0,0,0,.25);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--brd);background:var(--bg3)">
+      <div style="font-size:13px;font-weight:700;color:var(--txt)">⚙ Unit Settings</div>
+      <button onclick="closeUnits()" style="border:none;background:transparent;font-size:18px;cursor:pointer;color:var(--txt3);line-height:1;padding:2px 6px;border-radius:4px" onmouseover="this.style.background='var(--red-dim)'" onmouseout="this.style.background='transparent'">×</button>
+    </div>
+    <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <!-- Pressure -->
+      <div>
+        <div style="font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">↓ Pressure</div>
+        <label class="uopt"><input type="radio" name="punit" value="m" checked> m H₂O (metre head)</label>
+        <label class="uopt"><input type="radio" name="punit" value="bar"> bar</label>
+        <label class="uopt"><input type="radio" name="punit" value="kpa"> kPa</label>
+        <label class="uopt"><input type="radio" name="punit" value="psi"> psi</label>
+        <label class="uopt"><input type="radio" name="punit" value="mpa"> MPa</label>
+        <label class="uopt"><input type="radio" name="punit" value="atm"> atm</label>
+      </div>
+      <!-- Flow -->
+      <div>
+        <div style="font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">↓ Flow Rate</div>
+        <label class="uopt"><input type="radio" name="funit" value="ls" checked> L/s</label>
+        <label class="uopt"><input type="radio" name="funit" value="lm"> L/min</label>
+        <label class="uopt"><input type="radio" name="funit" value="m3h"> m³/h</label>
+        <label class="uopt"><input type="radio" name="funit" value="gpm"> gpm (US)</label>
+        <label class="uopt"><input type="radio" name="funit" value="m3s"> m³/s</label>
+      </div>
+      <!-- Power -->
+      <div>
+        <div style="font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">↓ Power</div>
+        <label class="uopt"><input type="radio" name="powunit" value="kw" checked> kW</label>
+        <label class="uopt"><input type="radio" name="powunit" value="hp"> hp</label>
+        <label class="uopt"><input type="radio" name="powunit" value="w"> W</label>
+      </div>
+      <!-- Length -->
+      <div>
+        <div style="font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">↓ Length</div>
+        <label class="uopt"><input type="radio" name="lenunit" value="m" checked> m</label>
+        <label class="uopt"><input type="radio" name="lenunit" value="ft"> ft</label>
+        <label class="uopt"><input type="radio" name="lenunit" value="mm"> mm</label>
+      </div>
+    </div>
+    <div style="padding:10px 16px;border-top:1px solid var(--brd);text-align:right;background:var(--bg3)">
+      <button onclick="applyUnitsFromPopup()" style="padding:6px 18px;font-size:11px;font-weight:700;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer">Apply</button>
+    </div>
+  </div>
+</div>
+
 <script src="engine.js"></script>
 <script src="app.js"></script>
 </body>

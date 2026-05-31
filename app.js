@@ -22,6 +22,7 @@ function applyDarkMode(dark){
   document.body.classList.toggle('dark',dark);
   localStorage.setItem('hydraulic_dark',dark?'1':'0');
   const icon=document.getElementById('dark-icon');
+  const lbl=document.getElementById('dark-lbl');
   if(icon){
     if(dark){
       icon.innerHTML='<path d="M7 1C3.7 1 1 3.7 1 7C1 10.3 3.7 13 7 13C10.3 13 13 10.3 13 7" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M7 1C8 3 8 5 7 7C5 8 3 8 1 7" fill="currentColor" opacity=".5"/>';
@@ -29,6 +30,7 @@ function applyDarkMode(dark){
       icon.innerHTML='<path d="M7 2C4.2 2 2 4.2 2 7C2 9.8 4.2 12 7 12C9.8 12 12 9.8 12 7C12 4.2 9.8 2 7 2Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2.5" fill="currentColor"/>';
     }
   }
+  if(lbl)lbl.textContent=dark?'Dark':'Light';
   scheduleDraw();
 }
 document.getElementById('bdark').onclick=()=>{
@@ -36,11 +38,27 @@ document.getElementById('bdark').onclick=()=>{
 };
 
 // ── UNITS SYSTEM ──────────────────────────────────────────
-document.getElementById('units-system').addEventListener('change',function(){
-  applyUnits(this.value);
+// Units popup
+function openUnits(){document.getElementById('units-popup').style.display='';}
+function closeUnits(){document.getElementById('units-popup').style.display='none';}
+function applyUnitsFromPopup(){
+  _pUnit=document.querySelector('input[name="punit"]:checked')?.value||'m';
+  _fUnit=document.querySelector('input[name="funit"]:checked')?.value||'ls';
+  _powUnit=document.querySelector('input[name="powunit"]:checked')?.value||'kw';
+  _lenUnit=document.querySelector('input[name="lenunit"]:checked')?.value||'m';
+  closeUnits();
   if(sel)showProp(sel);
   scheduleDraw();
-});
+  showFlash('Units updated','var(--blue)');
+}
+// Sync radios to current values when opening
+document.getElementById('bunits').onclick=()=>{
+  const pu=document.querySelector(`input[name="punit"][value="${_pUnit}"]`);if(pu)pu.checked=true;
+  const fu=document.querySelector(`input[name="funit"][value="${_fUnit}"]`);if(fu)fu.checked=true;
+  const pw=document.querySelector(`input[name="powunit"][value="${_powUnit||'kw'}"]`);if(pw)pw.checked=true;
+  const lu=document.querySelector(`input[name="lenunit"][value="${_lenUnit||'m'}"]`);if(lu)lu.checked=true;
+  openUnits();
+};
 
 // ── MINIMAP ───────────────────────────────────────────────
 const mm=document.getElementById('minimap');
