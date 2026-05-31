@@ -3,285 +3,351 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hydraulic P&ID — Professional Edition</title>
+  <title>Hydraulic P&amp;ID — Professional</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
 
-  <!-- ══════════ HEADER ══════════ -->
-  <div id="header">
-    <div id="logo">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="13" fill="#1a3a6e" stroke="#3b82f6" stroke-width="1.5"/>
-        <path d="M14 6 C10 6 7 9 7 13 C7 17 10 19 14 22 C18 19 21 17 21 13 C21 9 18 6 14 6Z" fill="#3b82f6" opacity=".7"/>
-        <circle cx="14" cy="13" r="4" fill="#60a5fa"/>
-      </svg>
-      <div id="logo-text">
-        <div id="logo-title">Hydraulic P&amp;ID</div>
-        <div id="logo-sub">Professional Edition</div>
-      </div>
-    </div>
-
-    <div id="toolbar">
-      <div class="tb-sep"></div>
-      <button class="tb" id="bsel" title="Select [S]">
-        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 2L2 10L5 7.5L7 12L8.5 11L6.5 6.5L10 6Z" fill="currentColor"/></svg>
-        Select
-      </button>
-      <button class="tb" id="bpip" title="Pipe [P]">
-        <svg width="14" height="14" viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        Pipe
-      </button>
-      <button class="tb" id="bvlv" title="Valve [V]">
-        <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="2,3 7,7 2,11" fill="none" stroke="currentColor" stroke-width="1.4"/><polygon points="12,3 7,7 12,11" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="7" y1="2" x2="7" y2="0" stroke="currentColor" stroke-width="1.3"/></svg>
-        Valve
-      </button>
-      <div class="tb-sep"></div>
-      <button class="tb" id="bundo" title="Undo Ctrl+Z">
-        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7 C3 4 5.5 2 8 2 C10.5 2 12 3.5 12 5.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><polyline points="1,4 3,7 6,5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-        Undo
-      </button>
-      <button class="tb" id="bredo" title="Redo Ctrl+Y">
-        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M11 7 C11 4 8.5 2 6 2 C3.5 2 2 3.5 2 5.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><polyline points="13,4 11,7 8,5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-        Redo
-      </button>
-      <div class="tb-sep"></div>
-      <button class="tb tb-calc" id="bcalc">
-        <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="7,1 13,12 1,12" fill="currentColor" opacity=".9"/><line x1="7" y1="5" x2="7" y2="9" stroke="#0b0c0e" stroke-width="1.3"/><circle cx="7" cy="10.5" r=".9" fill="#0b0c0e"/></svg>
-        Calculate
-      </button>
-      <div class="tb-sep"></div>
-      <button class="tb tb-save" id="bsave" title="Save Project Ctrl+S">
-        <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="1" width="10" height="12" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="4" y="1" width="6" height="4" fill="currentColor" opacity=".6"/><rect x="4" y="8" width="6" height="4" rx=".5" stroke="currentColor" stroke-width="1.1" fill="none"/></svg>
-        Save
-      </button>
-      <button class="tb" id="bload" title="Load Project">
-        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 4 L2 12 L12 12 L12 4 L8 4 L7 2 L4 2 Z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
-        Open
-      </button>
-      <input type="file" id="file-load" accept=".json" style="display:none">
-      <div class="tb-sep"></div>
-      <button class="tb" id="bexport" title="Export PNG Report">
-        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 2 L7 9 M4 7 L7 10 L10 7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><line x1="2" y1="12" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Export
-      </button>
-      <button class="tb tb-red" id="bclr" title="Clear Canvas">
-        <svg width="14" height="14" viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        Clear
-      </button>
-      <div class="tb-sep"></div>
-      <span id="mtag">select [S]</span>
-    </div>
-
-    <div id="hdr-right">
-      <select id="up" class="hdr-select"><option value="m">m H₂O</option><option value="bar">bar</option><option value="psi">psi</option><option value="kpa">kPa</option></select>
-      <select id="uf" class="hdr-select"><option value="ls">L/s</option><option value="lm">L/min</option><option value="m3h">m³/h</option></select>
+<!-- ══════════ HEADER ══════════ -->
+<div id="header">
+  <div id="logo">
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+      <circle cx="15" cy="15" r="14" fill="#1971c2" opacity=".12"/>
+      <circle cx="15" cy="15" r="14" stroke="#1971c2" stroke-width="1.5" fill="none"/>
+      <path d="M15 5 C10 5 6 9 6 14 C6 19 10 22 15 26 C20 22 24 19 24 14 C24 9 20 5 15 5Z" fill="#1971c2" opacity=".5"/>
+      <circle cx="15" cy="14" r="5" fill="#1971c2"/>
+    </svg>
+    <div>
+      <div id="logo-title">Hydraulic P&amp;ID</div>
+      <div id="logo-sub">Professional Edition</div>
     </div>
   </div>
 
-  <!-- ══════════ BODY ══════════ -->
-  <div id="body">
+  <div id="toolbar">
+    <!-- Mode buttons -->
+    <button class="tb on" id="bsel" title="Select [S]">
+      <svg width="13" height="13" viewBox="0 0 13 13"><path d="M2 2L2 9L4.5 7L6.5 11L8 10.3L6 6.5L9.5 5.5Z" fill="currentColor"/></svg>Select
+    </button>
+    <button class="tb" id="bpip" title="Pipe [P]">
+      <svg width="13" height="13" viewBox="0 0 13 13"><line x1="2" y1="6.5" x2="11" y2="6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="8,4 11,6.5 8,9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>Pipe
+    </button>
+    <div class="tb-sep"></div>
+    <!-- History -->
+    <button class="tb" id="bundo" title="Undo [Ctrl+Z]">
+      <svg width="13" height="13" viewBox="0 0 13 13"><path d="M3 6.5C3 4 5 2 7.5 2C10 2 11.5 3.5 11.5 5.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><polyline points="1,3.5 3,6.5 5.5,4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Undo
+    </button>
+    <button class="tb" id="bredo" title="Redo [Ctrl+Y]">
+      <svg width="13" height="13" viewBox="0 0 13 13"><path d="M10 6.5C10 4 8 2 5.5 2C3 2 1.5 3.5 1.5 5.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><polyline points="12,3.5 10,6.5 7.5,4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Redo
+    </button>
+    <div class="tb-sep"></div>
+    <!-- Calculate -->
+    <button class="tb tb-calc" id="bcalc">
+      <svg width="13" height="13" viewBox="0 0 13 13"><polygon points="6.5,1 12,11 1,11" fill="white" opacity=".9"/><line x1="6.5" y1="5" x2="6.5" y2="8.5" stroke="#1971c2" stroke-width="1.2"/><circle cx="6.5" cy="9.5" r=".8" fill="#1971c2"/></svg>Calculate
+    </button>
+    <div class="tb-sep"></div>
+    <!-- Save / Open -->
+    <button class="tb tb-save" id="bsave" title="Save [Ctrl+S]">
+      <svg width="13" height="13" viewBox="0 0 13 13"><rect x="2" y="1" width="9" height="11" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="4" y="1" width="5" height="4" fill="currentColor" opacity=".5"/><rect x="3.5" y="7" width="6" height="4" rx=".5" stroke="currentColor" stroke-width="1.1" fill="none"/></svg>Save
+    </button>
+    <button class="tb" id="bload" title="Open project">
+      <svg width="13" height="13" viewBox="0 0 13 13"><path d="M1.5 4L1.5 11L11.5 11L11.5 4L7.5 4L6.5 2L3.5 2Z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>Open
+    </button>
+    <input type="file" id="file-load" accept=".json" style="display:none">
+    <div class="tb-sep"></div>
+    <!-- Export -->
+    <button class="tb" id="bexport" title="Export PNG report">
+      <svg width="13" height="13" viewBox="0 0 13 13"><path d="M6.5 2L6.5 8.5M4 6.5L6.5 9.5L9 6.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><line x1="2" y1="11" x2="11" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Export
+    </button>
+    <button class="tb tb-red" id="bclr" title="Clear canvas">
+      <svg width="13" height="13" viewBox="0 0 13 13"><line x1="2" y1="2" x2="11" y2="11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><line x1="11" y1="2" x2="2" y2="11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Clear
+    </button>
+  </div>
 
-    <!-- LIBRARY -->
-    <div id="lib">
-      <div class="lib-search-wrap">
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="position:absolute;left:10px;top:50%;transform:translateY(-50%)"><circle cx="4.5" cy="4.5" r="3.5" stroke="#444c58" stroke-width="1.2"/><line x1="7.5" y1="7.5" x2="10" y2="10" stroke="#444c58" stroke-width="1.2" stroke-linecap="round"/></svg>
-        <input id="lib-search" placeholder="Search components..." class="lib-search">
-      </div>
-      <div class="lib-section-label">EQUIPMENT</div>
-      <div class="lib-group-items" id="grp-equipment">
+  <!-- Right: Units + Dark toggle -->
+  <div id="hdr-right">
+    <span class="units-lbl">Units:</span>
+    <select id="units-system" class="hdr-sel" title="Unit system">
+      <option value="si_m">SI (m H₂O / L/s)</option>
+      <option value="si_bar">SI (bar / m³/h)</option>
+      <option value="si_kpa">SI (kPa / L/s)</option>
+      <option value="imperial">Imperial (psi / gpm)</option>
+    </select>
+    <button class="tb tb-dark" id="bdark" title="Toggle dark mode" style="min-width:32px">
+      <svg id="dark-icon" width="14" height="14" viewBox="0 0 14 14"><path d="M7 2C4.2 2 2 4.2 2 7C2 9.8 4.2 12 7 12C9.8 12 12 9.8 12 7C12 4.2 9.8 2 7 2Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2.5" fill="currentColor"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════ PROJECT TABS ══════════ -->
+<div id="proj-tabs-bar">
+  <!-- Rendered by renderTabs() in JS -->
+</div>
+
+<div id="body">
+
+<!-- ══════════ LIBRARY ══════════ -->
+<div id="lib">
+  <div class="lib-search-wrap">
+    <svg class="lib-search-icon" width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.2"/><line x1="7.5" y1="7.5" x2="11" y2="11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <input id="lib-search" class="lib-search" placeholder="Search components...">
+  </div>
+  <div class="lib-scroll">
+
+    <!-- EQUIPMENT -->
+    <div class="lib-sec" id="ls-equip">
+      <div class="lib-sec-hdr" onclick="toggleLibSec('ls-equip')">Equipment <span class="chev">▾</span></div>
+      <div class="lib-items">
         <div class="li" draggable="true" data-type="tank">
-          <svg width="36" height="28" viewBox="0 0 44 36" fill="none"><ellipse cx="22" cy="8" rx="18" ry="5" stroke="#a3e635" stroke-width="1.3" fill="#081500"/><rect x="4" y="8" width="36" height="20" fill="#081500" stroke="#a3e635" stroke-width="1.3"/><ellipse cx="22" cy="28" rx="18" ry="5" stroke="#a3e635" stroke-width="1.3" fill="#0e2000"/><line x1="4" y1="20" x2="40" y2="20" stroke="#a3e635" stroke-width=".7" stroke-dasharray="2,2"/></svg>
+          <svg width="38" height="28" viewBox="0 0 44 36" fill="none"><ellipse cx="22" cy="8" rx="18" ry="5" stroke="#2f9e44" stroke-width="1.4" fill="#ebfbee"/><rect x="4" y="8" width="36" height="20" fill="#ebfbee" stroke="#2f9e44" stroke-width="1.4"/><ellipse cx="22" cy="28" rx="18" ry="5" stroke="#2f9e44" stroke-width="1.4" fill="#d3f9d8"/><line x1="4" y1="20" x2="40" y2="20" stroke="#2f9e44" stroke-width=".7" stroke-dasharray="2,2"/></svg>
           <span>Tank</span>
         </div>
         <div class="li" draggable="true" data-type="pump-booster">
-          <svg width="36" height="28" viewBox="0 0 44 28" fill="none"><circle cx="22" cy="14" r="11" stroke="#60a5fa" stroke-width="1.3" fill="#080f1a"/><path d="M16 14L26 8L26 20Z" fill="#60a5fa" opacity=".9"/><line x1="1" y1="14" x2="11" y2="14" stroke="#60a5fa" stroke-width="1.8"/><line x1="33" y1="14" x2="43" y2="14" stroke="#60a5fa" stroke-width="1.8"/></svg>
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none"><circle cx="22" cy="14" r="11" stroke="#1971c2" stroke-width="1.4" fill="#e7f5ff"/><path d="M16 14L26 8L26 20Z" fill="#1971c2" opacity=".8"/><line x1="1" y1="14" x2="11" y2="14" stroke="#1971c2" stroke-width="1.8"/><line x1="33" y1="14" x2="43" y2="14" stroke="#1971c2" stroke-width="1.8"/></svg>
           <span>Booster Pump</span>
         </div>
         <div class="li" draggable="true" data-type="pump-lift">
-          <svg width="36" height="28" viewBox="0 0 44 28" fill="none"><circle cx="22" cy="14" r="11" stroke="#818cf8" stroke-width="1.3" fill="#0c0a1a"/><path d="M16 14L26 8L26 20Z" fill="#818cf8" opacity=".9"/><line x1="1" y1="14" x2="11" y2="14" stroke="#818cf8" stroke-width="1.8"/><line x1="33" y1="14" x2="43" y2="14" stroke="#818cf8" stroke-width="1.8"/></svg>
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none"><circle cx="22" cy="14" r="11" stroke="#7048e8" stroke-width="1.4" fill="#f3f0ff"/><path d="M16 14L26 8L26 20Z" fill="#7048e8" opacity=".8"/><line x1="1" y1="14" x2="11" y2="14" stroke="#7048e8" stroke-width="1.8"/><line x1="33" y1="14" x2="43" y2="14" stroke="#7048e8" stroke-width="1.8"/></svg>
           <span>Lift Pump</span>
         </div>
         <div class="li" draggable="true" data-type="pump-circ">
-          <svg width="36" height="28" viewBox="0 0 44 28" fill="none"><circle cx="22" cy="14" r="11" stroke="#34d399" stroke-width="1.3" fill="#041a10"/><path d="M16 14 A6 6 0 1 1 22 20" stroke="#34d399" stroke-width="1.8" fill="none"/><line x1="1" y1="14" x2="11" y2="14" stroke="#34d399" stroke-width="1.8"/><line x1="33" y1="14" x2="43" y2="14" stroke="#34d399" stroke-width="1.8"/></svg>
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none"><circle cx="22" cy="14" r="11" stroke="#0c8599" stroke-width="1.4" fill="#e3fafc"/><path d="M16 14 A6 6 0 1 1 22 20" stroke="#0c8599" stroke-width="1.8" fill="none"/><line x1="1" y1="14" x2="11" y2="14" stroke="#0c8599" stroke-width="1.8"/><line x1="33" y1="14" x2="43" y2="14" stroke="#0c8599" stroke-width="1.8"/></svg>
           <span>Circ. Pump</span>
         </div>
         <div class="li" draggable="true" data-type="hex">
-          <svg width="36" height="28" viewBox="0 0 44 28" fill="none"><rect x="5" y="3" width="34" height="22" rx="2" stroke="#f97316" stroke-width="1.2" fill="#160800"/><line x1="5" y1="11" x2="39" y2="11" stroke="#f97316" stroke-width=".7" stroke-dasharray="3,2"/><line x1="5" y1="17" x2="39" y2="17" stroke="#f97316" stroke-width=".7" stroke-dasharray="3,2"/><line x1="1" y1="14" x2="5" y2="14" stroke="#f97316" stroke-width="1.5"/><line x1="39" y1="14" x2="43" y2="14" stroke="#f97316" stroke-width="1.5"/></svg>
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none"><rect x="5" y="3" width="34" height="22" rx="2" stroke="#e8590c" stroke-width="1.3" fill="#fff4e6"/><line x1="5" y1="11" x2="39" y2="11" stroke="#e8590c" stroke-width=".8" stroke-dasharray="3,2"/><line x1="5" y1="17" x2="39" y2="17" stroke="#e8590c" stroke-width=".8" stroke-dasharray="3,2"/><text x="22" y="11" text-anchor="middle" fill="#e8590c" font-size="7" font-family="sans-serif" dominant-baseline="central">HEX</text></svg>
           <span>Heat Exchanger</span>
         </div>
         <div class="li" draggable="true" data-type="calorifier">
-          <svg width="36" height="28" viewBox="0 0 44 28" fill="none"><ellipse cx="22" cy="14" rx="14" ry="11" stroke="#fb923c" stroke-width="1.2" fill="#160a00"/><path d="M14 18 Q22 5 30 18" stroke="#fb923c" stroke-width="1.3" fill="none"/><line x1="1" y1="14" x2="8" y2="14" stroke="#fb923c" stroke-width="1.5"/><line x1="36" y1="14" x2="43" y2="14" stroke="#fb923c" stroke-width="1.5"/></svg>
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none"><ellipse cx="22" cy="14" rx="14" ry="11" stroke="#e8590c" stroke-width="1.3" fill="#fff4e6"/><path d="M14 18 Q22 5 30 18" stroke="#e8590c" stroke-width="1.4" fill="none"/><line x1="1" y1="14" x2="8" y2="14" stroke="#e8590c" stroke-width="1.5"/><line x1="36" y1="14" x2="43" y2="14" stroke="#e8590c" stroke-width="1.5"/></svg>
           <span>Calorifier</span>
         </div>
-      </div>
-
-      <div class="lib-section-label">VALVES</div>
-      <div class="lib-group-items" id="grp-valves">
-        <div class="li" draggable="true" data-type="valve">
-          <svg width="36" height="28" viewBox="0 0 44 28" fill="none"><polygon points="2,6 20,14 2,22" stroke="#facc15" stroke-width="1.2" fill="#161000"/><polygon points="42,6 24,14 42,22" stroke="#facc15" stroke-width="1.2" fill="#161000"/><line x1="20" y1="14" x2="24" y2="14" stroke="#facc15" stroke-width="1.5"/><line x1="21" y1="6" x2="21" y2="1" stroke="#facc15" stroke-width="1.2"/><line x1="17" y1="1" x2="25" y2="1" stroke="#facc15" stroke-width="1.2"/></svg>
-          <span>Gate Valve</span>
-        </div>
-      </div>
-
-      <div class="lib-section-label">ENDPOINTS</div>
-      <div class="lib-group-items" id="grp-endpoints">
         <div class="li" draggable="true" data-type="outlet">
-          <svg width="36" height="28" viewBox="0 0 44 28" fill="none"><circle cx="22" cy="14" r="10" stroke="#22c55e" stroke-width="1.5" fill="#051a0a"/><line x1="14" y1="14" x2="30" y2="14" stroke="#22c55e" stroke-width="1.3"/><line x1="22" y1="6" x2="22" y2="22" stroke="#22c55e" stroke-width="1.3"/><circle cx="22" cy="14" r="3" fill="#22c55e"/></svg>
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none"><circle cx="22" cy="14" r="10" stroke="#2f9e44" stroke-width="1.5" fill="#ebfbee"/><line x1="14" y1="14" x2="30" y2="14" stroke="#2f9e44" stroke-width="1.4"/><line x1="22" y1="6" x2="22" y2="22" stroke="#2f9e44" stroke-width="1.4"/><circle cx="22" cy="14" r="3" fill="#2f9e44"/></svg>
           <span>Outlet</span>
         </div>
       </div>
     </div>
 
-    <!-- CANVAS AREA -->
-    <div id="canvas-col">
-      <div id="cvwrap">
-        <canvas id="cv"></canvas>
-        <div id="sel-box"></div>
-        <div id="flash"></div>
-        <!-- Mini-map -->
-        <div id="minimap-wrap">
-          <canvas id="minimap" width="140" height="90"></canvas>
+    <!-- VALVES -->
+    <div class="lib-sec" id="ls-valves">
+      <div class="lib-sec-hdr" onclick="toggleLibSec('ls-valves')">Valves <span class="chev">▾</span></div>
+      <div class="lib-items">
+        <!-- Gate Valve -->
+        <div class="li" draggable="true" data-type="valve-gate">
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none">
+            <polygon points="2,6 20,14 2,22" stroke="#d97706" stroke-width="1.3" fill="#fffbeb"/>
+            <polygon points="42,6 24,14 42,22" stroke="#d97706" stroke-width="1.3" fill="#fffbeb"/>
+            <line x1="20" y1="14" x2="24" y2="14" stroke="#d97706" stroke-width="1.5"/>
+            <line x1="21" y1="6" x2="21" y2="1" stroke="#d97706" stroke-width="1.3"/>
+            <line x1="17" y1="1" x2="25" y2="1" stroke="#d97706" stroke-width="1.3"/>
+          </svg>
+          <span>Gate Valve</span>
         </div>
-        <!-- Zoom controls -->
-        <div id="zctrl">
-          <div class="zb" id="zin">+</div>
-          <div id="zpct">100%</div>
-          <div class="zb" id="zout">−</div>
-          <div class="zb" id="zrst" title="Reset zoom">⊡</div>
+        <!-- Ball Valve -->
+        <div class="li" draggable="true" data-type="valve-ball">
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none">
+            <circle cx="22" cy="14" r="9" stroke="#d97706" stroke-width="1.3" fill="#fffbeb"/>
+            <line x1="1" y1="14" x2="13" y2="14" stroke="#d97706" stroke-width="1.8"/>
+            <line x1="31" y1="14" x2="43" y2="14" stroke="#d97706" stroke-width="1.8"/>
+            <line x1="22" y1="7" x2="22" y2="21" stroke="#d97706" stroke-width="1.5"/>
+            <line x1="22" y1="5" x2="22" y2="1" stroke="#d97706" stroke-width="1.3"/>
+            <line x1="18" y1="1" x2="26" y2="1" stroke="#d97706" stroke-width="1.3"/>
+          </svg>
+          <span>Ball Valve</span>
         </div>
-        <!-- Velocity legend -->
-        <div id="legends">
-          <div class="leg-hd">Velocity</div>
-          <div class="leg-row"><div class="leg-line" style="background:#60a5fa"></div><span>&lt;1.2 m/s</span></div>
-          <div class="leg-row"><div class="leg-line" style="background:#4ade80"></div><span>1.2–2.4</span></div>
-          <div class="leg-row"><div class="leg-line" style="background:#f87171"></div><span>&gt;2.4 m/s</span></div>
+        <!-- Check Valve -->
+        <div class="li" draggable="true" data-type="valve-check">
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none">
+            <line x1="1" y1="14" x2="43" y2="14" stroke="#d97706" stroke-width="1.5"/>
+            <polygon points="8,7 28,14 8,21" stroke="#d97706" stroke-width="1.3" fill="#fffbeb"/>
+            <line x1="28" y1="7" x2="28" y2="21" stroke="#d97706" stroke-width="2"/>
+          </svg>
+          <span>Check Valve</span>
         </div>
-        <div class="multi-hint" id="multi-hint">Shift+click to add · drag empty = box select · Ctrl+A = all</div>
-      </div>
-
-      <!-- RESULTS TABLE (appears after Calculate) -->
-      <div id="results-table-wrap" style="display:none">
-        <div id="rt-header">
-          <span id="rt-title">📊 Results Table</span>
-          <div id="rt-hdr-right">
-            <span id="rt-status-badge" class="bdg ok">—</span>
-            <button id="rt-toggle" class="rt-btn">▲ Hide</button>
-          </div>
+        <!-- Butterfly Valve -->
+        <div class="li" draggable="true" data-type="valve-butterfly">
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none">
+            <line x1="1" y1="14" x2="43" y2="14" stroke="#d97706" stroke-width="1.5"/>
+            <ellipse cx="22" cy="14" rx="10" ry="8" stroke="#d97706" stroke-width="1.3" fill="#fffbeb"/>
+            <line x1="22" y1="6" x2="22" y2="22" stroke="#d97706" stroke-width="1.5"/>
+            <line x1="22" y1="4" x2="22" y2="1" stroke="#d97706" stroke-width="1.3"/>
+            <line x1="18" y1="1" x2="26" y2="1" stroke="#d97706" stroke-width="1.3"/>
+          </svg>
+          <span>Butterfly Valve</span>
         </div>
-        <div id="rt-body">
-          <table id="results-table">
-            <thead>
-              <tr>
-                <th>ID</th><th>Component</th><th>Type</th>
-                <th>Dia (mm)</th><th>L (m)</th>
-                <th>Flow</th><th>v (m/s)</th>
-                <th>ΔH Friction (m)</th><th>ΔH Valve (m)</th><th>ΔH Total (m)</th>
-                <th>P Inlet</th><th>P Outlet</th>
-              </tr>
-            </thead>
-            <tbody id="rt-tbody"></tbody>
-            <tfoot id="rt-tfoot"></tfoot>
-          </table>
+        <!-- Pressure Relief Valve -->
+        <div class="li" draggable="true" data-type="valve-relief">
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none">
+            <line x1="1" y1="14" x2="43" y2="14" stroke="#e03131" stroke-width="1.5"/>
+            <polygon points="10,7 34,14 10,21" stroke="#e03131" stroke-width="1.3" fill="#fff5f5"/>
+            <line x1="34" y1="7" x2="34" y2="1" stroke="#e03131" stroke-width="1.3"/>
+            <path d="M30 1 Q32 3 34 1 Q36 3 38 1" stroke="#e03131" stroke-width="1.3" fill="none"/>
+          </svg>
+          <span>Relief Valve</span>
         </div>
-      </div>
-    </div>
-
-    <!-- RIGHT PANEL -->
-    <div id="rp">
-      <!-- Tabs -->
-      <div id="rp-tabs">
-        <button class="rp-tab active" id="tab-prop-btn" onclick="switchTab('prop')">PROPERTIES</button>
-        <button class="rp-tab" id="tab-calc-btn" onclick="switchTab('calc')">CALCULATION</button>
-      </div>
-
-      <!-- Properties Tab -->
-      <div id="tab-prop" class="tab-content" style="overflow-y:auto;flex:1">
-        <div id="phint" style="padding:12px">
-          <div class="stit">How to Use</div>
-          <p class="htxt">
-            1. Drag components from library.<br><br>
-            2. <b style="color:#60a5fa">[P] Pipe</b>: click A → B.<br><br>
-            3. Click pipe middle = branch.<br><br>
-            4. <b style="color:#facc15">[V] Valve</b>: activate, click pipe.<br><br>
-            5. <b style="color:#a78bfa">Multi-select</b>: drag empty or Shift+click.<br><br>
-            6. <b>[S]</b> Select · Scroll=zoom · Space+drag=pan.<br><br>
-            7. Ctrl+Z undo · Ctrl+Y redo · Ctrl+A all.<br><br>
-            8. 💾 Save/Load as JSON.
-          </p>
-        </div>
-        <div id="pprops" style="display:none;padding:12px">
-          <div class="stit" id="ptit">Properties</div>
-          <div id="pfields"></div>
-          <div id="pbtns"></div>
-        </div>
-      </div>
-
-      <!-- Calculation Tab -->
-      <div id="tab-calc" class="tab-content" style="display:none;flex-direction:column;flex:1;overflow:hidden">
-        <!-- Summary Cards -->
-        <div id="summary-cards">
-          <div class="scard"><div class="scard-lbl">Total Flow</div><div class="scard-val" id="sc-flow">—</div></div>
-          <div class="scard"><div class="scard-lbl">Head Loss</div><div class="scard-val" id="sc-hloss">—</div></div>
-          <div class="scard"><div class="scard-lbl">P Inlet</div><div class="scard-val" id="sc-pin">—</div></div>
-          <div class="scard"><div class="scard-lbl">P Outlet (min)</div><div class="scard-val" id="sc-pout">—</div></div>
-          <div class="scard"><div class="scard-lbl">Pump Power</div><div class="scard-val" id="sc-power">—</div></div>
-          <div class="scard"><div class="scard-lbl">Avg Velocity</div><div class="scard-val" id="sc-vel">—</div></div>
-        </div>
-        <!-- Detailed results list -->
-        <div id="rp-results" style="overflow-y:auto;flex:1;padding:10px 12px">
-          <div style="font-size:9px;color:#444c58;text-align:center;padding-top:20px">Run Calculate to see results</div>
-        </div>
-      </div>
-
-      <!-- Settings always at bottom -->
-      <div id="rp-bot">
-        <div class="stit">Calculation Settings</div>
-        <div class="fld">
-          <label>Method</label>
-          <select id="calc-method">
-            <option value="rule">Approximation (Friction %)</option>
-            <option value="hw">Hazen-Williams</option>
-          </select>
-        </div>
-        <div id="rot-set">
-          <div class="sl-r"><label>Friction %</label><input type="range" id="fsl" min="6" max="11" step="1" value="8"><span id="fval">8%</span></div>
-        </div>
-        <div id="hw-set" style="display:none">
-          <div class="fld"><label>Material (C)</label>
-            <select id="hw-c">
-              <option value="150">PVC/PE — C=150</option>
-              <option value="148">PPR — C=148</option>
-              <option value="140">Copper — C=140</option>
-              <option value="130" selected>New Steel — C=130</option>
-              <option value="120">Galv. Steel — C=120</option>
-              <option value="100">Cast Iron — C=100</option>
-            </select>
-          </div>
+        <!-- Pressure Reducing Station -->
+        <div class="li" draggable="true" data-type="valve-reducing">
+          <svg width="38" height="28" viewBox="0 0 44 28" fill="none">
+            <rect x="6" y="5" width="32" height="18" rx="2" stroke="#7048e8" stroke-width="1.3" fill="#f3f0ff"/>
+            <line x1="1" y1="14" x2="6" y2="14" stroke="#7048e8" stroke-width="1.8"/>
+            <line x1="38" y1="14" x2="43" y2="14" stroke="#7048e8" stroke-width="1.8"/>
+            <polygon points="12,10 22,14 12,18" stroke="#7048e8" stroke-width="1" fill="#c5b8fa"/>
+            <polygon points="32,10 22,14 32,18" stroke="#7048e8" stroke-width="1" fill="#c5b8fa"/>
+            <line x1="22" y1="10" x2="22" y2="18" stroke="#7048e8" stroke-width="1.3"/>
+          </svg>
+          <span>PRS</span>
         </div>
       </div>
     </div>
 
-  </div><!-- /body -->
+    <!-- ANNOTATIONS -->
+    <div class="lib-sec" id="ls-notes">
+      <div class="lib-sec-hdr" onclick="toggleLibSec('ls-notes')">Annotations <span class="chev">▾</span></div>
+      <div class="lib-items">
+        <div class="li" draggable="true" data-type="note" style="grid-column:1/-1">
+          <svg width="70" height="24" viewBox="0 0 80 24" fill="none">
+            <rect x="1" y="1" width="78" height="22" rx="3" stroke="#6b7280" stroke-width="1.2" fill="#f9fafb"/>
+            <text x="40" y="14" text-anchor="middle" fill="#6b7280" font-size="9" font-family="Segoe UI,sans-serif" dominant-baseline="middle">Text / Note</text>
+          </svg>
+          <span>Text / Note</span>
+        </div>
+      </div>
+    </div>
 
-  <!-- ══════════ STATUS BAR ══════════ -->
-  <div id="statusbar">
-    <div id="sb-left">
-      <span id="sb-project">Main Diagram</span>
-      <span id="sb-saved" class="sb-saved">● Saved</span>
+  </div><!-- /lib-scroll -->
+</div><!-- /lib -->
+
+<!-- ══════════ CANVAS COLUMN ══════════ -->
+<div id="canvas-col">
+  <div id="cvwrap">
+    <canvas id="cv"></canvas>
+    <div id="sel-box"></div>
+    <div id="flash"></div>
+    <div id="note-editor"><textarea id="note-ta" rows="2" cols="20"></textarea></div>
+    <div id="minimap-wrap"><canvas id="minimap" width="140" height="88"></canvas></div>
+    <div id="zctrl">
+      <div class="zb" id="zin">+</div>
+      <div id="zpct">100%</div>
+      <div class="zb" id="zout">−</div>
+      <div class="zb" id="zrst" title="Reset zoom" style="font-size:11px">1:1</div>
     </div>
-    <div id="sb-right">
-      <span id="sb-nodes">0 nodes</span>
-      <span class="sb-div">|</span>
-      <span id="sb-pipes">0 pipes</span>
-      <span class="sb-div">|</span>
-      <span id="sb-coord">x:0 y:0</span>
+    <div id="legends">
+      <div class="leg-hd">Velocity</div>
+      <div class="leg-row"><div class="leg-line" style="background:#1971c2"></div><span>&lt;1.2 m/s</span></div>
+      <div class="leg-row"><div class="leg-line" style="background:#2f9e44"></div><span>1.2–2.4</span></div>
+      <div class="leg-row"><div class="leg-line" style="background:#e03131"></div><span>&gt;2.4 m/s</span></div>
     </div>
+    <div class="multi-hint" id="multi-hint">Shift+click to add · drag empty = box select · Ctrl+A = all</div>
   </div>
 
-</div><!-- /app -->
+  <!-- Results Table -->
+  <div id="results-table-wrap" style="display:none">
+    <div id="rt-header">
+      <span id="rt-title">📊 Results Table</span>
+      <div id="rt-hdr-right">
+        <span id="rt-status-badge" class="bdg ok">—</span>
+        <button id="rt-toggle" class="rt-btn">▲ Hide</button>
+      </div>
+    </div>
+    <div id="rt-body">
+      <table id="results-table">
+        <thead><tr>
+          <th>ID</th><th>Component</th><th>Type</th>
+          <th>Dia (mm)</th><th>L (m)</th><th>Flow</th><th>v (m/s)</th>
+          <th>ΔH Fric (m)</th><th>ΔH Valve (m)</th><th>ΔH Total (m)</th>
+          <th>P Inlet</th><th>P Outlet</th>
+        </tr></thead>
+        <tbody id="rt-tbody"></tbody>
+        <tfoot id="rt-tfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
 
+<!-- ══════════ RIGHT PANEL ══════════ -->
+<div id="rp">
+  <div id="rp-tabs">
+    <button class="rp-tab active" id="tab-prop-btn" onclick="switchTab('prop')">PROPERTIES</button>
+    <button class="rp-tab" id="tab-calc-btn" onclick="switchTab('calc')">CALCULATION</button>
+  </div>
+  <div id="tab-prop" class="tab-content" style="overflow-y:auto;flex:1">
+    <div id="phint" style="padding:14px">
+      <div class="stit">No item selected</div>
+      <p class="htxt" style="margin-bottom:12px">Select a component on the diagram to view and edit its properties.</p>
+      <div class="stit" style="margin-top:10px">Quick Guide</div>
+      <p class="htxt">
+        1. Drag from library to canvas.<br>
+        2. <b style="color:var(--blue)">[P] Pipe</b>: click A then B.<br>
+        3. <b>Valves</b>: drag to pipe from library.<br>
+        4. <b>Shift+click</b>: multi-select.<br>
+        5. <b>Space+drag</b>: pan canvas.<br>
+        6. <b>Ctrl+Z/Y</b>: undo/redo.<br>
+        7. <b>Ctrl+S</b>: save project.
+      </p>
+    </div>
+    <div id="pprops" style="display:none;padding:12px">
+      <div class="stit" id="ptit">Properties</div>
+      <div id="pfields"></div>
+      <div id="pbtns"></div>
+    </div>
+  </div>
+  <div id="tab-calc" class="tab-content" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div id="summary-cards">
+      <div class="scard"><div class="scard-lbl">Total Flow</div><div class="scard-val" id="sc-flow">—</div></div>
+      <div class="scard"><div class="scard-lbl">Head Loss</div><div class="scard-val" id="sc-hloss">—</div></div>
+      <div class="scard"><div class="scard-lbl">P Inlet</div><div class="scard-val" id="sc-pin">—</div></div>
+      <div class="scard"><div class="scard-lbl">P Outlet min</div><div class="scard-val" id="sc-pout">—</div></div>
+      <div class="scard"><div class="scard-lbl">Pump Power</div><div class="scard-val" id="sc-power">—</div></div>
+      <div class="scard"><div class="scard-lbl">Avg Velocity</div><div class="scard-val" id="sc-vel">—</div></div>
+    </div>
+    <div id="rp-results" style="overflow-y:auto;flex:1;padding:10px 12px">
+      <p style="font-size:9px;color:var(--txt3);text-align:center;padding-top:20px">Run Calculate to see results</p>
+    </div>
+  </div>
+  <div id="rp-bot">
+    <div class="stit">Calculation Settings</div>
+    <div class="fld">
+      <label>Method</label>
+      <select id="calc-method">
+        <option value="rule">Approximation (Friction %)</option>
+        <option value="hw">Hazen-Williams</option>
+      </select>
+    </div>
+    <div id="rot-set">
+      <div class="sl-r"><label>Friction %</label><input type="range" id="fsl" min="6" max="11" step="1" value="8"><span id="fval">8%</span></div>
+    </div>
+    <div id="hw-set" style="display:none">
+      <div class="fld"><label>Material (C value)</label>
+        <select id="hw-c">
+          <option value="150">PVC / PE — C=150</option>
+          <option value="148">PPR — C=148</option>
+          <option value="140">Copper — C=140</option>
+          <option value="130" selected>New Steel — C=130</option>
+          <option value="120">Galv. Steel — C=120</option>
+          <option value="100">Cast Iron — C=100</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /body -->
+
+<!-- STATUS BAR -->
+<div id="statusbar">
+  <div id="sb-left">
+    <span id="sb-proj-name" style="font-weight:600;color:var(--txt2)">Main Diagram</span>
+    <span id="sb-saved" class="sb-saved">● Saved</span>
+  </div>
+  <div id="sb-right">
+    <span id="sb-nodes">0 nodes</span><span class="sb-div">|</span>
+    <span id="sb-pipes">0 pipes</span><span class="sb-div">|</span>
+    <span id="sb-coord">x:0 y:0</span>
+  </div>
+</div>
+
+</div><!-- /app -->
 <script src="engine.js"></script>
 <script src="app.js"></script>
 </body>
