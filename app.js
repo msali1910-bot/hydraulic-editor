@@ -327,16 +327,14 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{if(e.code==='Space'){spaceHeld=false;if(mode==='sel')cv.style.cursor='default';}});
 
-// ── VALVE DRAG STATE ──────────────────────────────────────
-let valveDrag=null; // {valve, pipe}
-
-// ── MOUSE EVENTS ──────────────────────────────────────────
-cv.addEventListener('mousemove',e=>{
-  const r=cv.getBoundingClientRect();mp={x:e.clientX-r.left,y:e.clientY-r.top};
+// mousemove on DOCUMENT so dragging outside canvas still works
+document.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect();
+  mp={x:e.clientX-r.left,y:e.clientY-r.top};
   updateCoord(mp.x,mp.y);
   if(isPanning){panX+=mp.x-panStart.x;panY+=mp.y-panStart.y;panStart={...mp};scheduleDraw();return;}
   if(mode==='pip'&&pipeSt)scheduleDraw();
-  // valve drag along pipe
+  // valve drag along pipe — works even outside canvas
   if(valveDrag){
     const{valve,pipe}=valveDrag;
     if(pipe&&pipe.nA&&pipe.nB){
@@ -363,8 +361,8 @@ cv.addEventListener('mousemove',e=>{
     scheduleDraw();return;
   }
   if(boxSelecting){boxEnd={x:mp.x,y:mp.y};drawSelBox();scheduleDraw();return;}
-  // cursor hint
-  if(mode==='sel'&&!spaceHeld){
+  // cursor hint — only when on canvas
+  if(mode==='sel'&&!spaceHeld&&e.target===cv){
     const v=hitValve(mp.x,mp.y);
     cv.style.cursor=v?'ew-resize':'default';
   }
@@ -421,7 +419,8 @@ cv.addEventListener('mousedown',e=>{
   }
 });
 
-cv.addEventListener('mouseup',()=>{
+// mouseup on DOCUMENT so releasing outside canvas still stops drag
+document.addEventListener('mouseup',()=>{
   if(isPanning){isPanning=false;cv.style.cursor=mode==='sel'?'default':'crosshair';}
   if(valveDrag){snapshot();valveDrag=null;cv.style.cursor='default';}
   if(multiDragStart){snapshot();multiDragStart=null;multiDragOffsets=[];}
