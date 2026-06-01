@@ -327,12 +327,26 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{if(e.code==='Space'){spaceHeld=false;if(mode==='sel')cv.style.cursor='default';}});
 
+// ── VALVE DRAG STATE ──────────────────────────────────────
+let valveDrag=null; // {valve, pipe}
+
 // ── MOUSE EVENTS ──────────────────────────────────────────
 cv.addEventListener('mousemove',e=>{
   const r=cv.getBoundingClientRect();mp={x:e.clientX-r.left,y:e.clientY-r.top};
   updateCoord(mp.x,mp.y);
   if(isPanning){panX+=mp.x-panStart.x;panY+=mp.y-panStart.y;panStart={...mp};scheduleDraw();return;}
   if(mode==='pip'&&pipeSt)scheduleDraw();
+  // valve drag along pipe
+  if(valveDrag){
+    const{valve,pipe}=valveDrag;
+    if(pipe&&pipe.nA&&pipe.nB){
+      const{x:wx,y:wy}=s2w(mp.x,mp.y);
+      const ax=pipe.nA.wx,ay=pipe.nA.wy,bx=pipe.nB.wx,by=pipe.nB.wy;
+      const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
+      if(l2>0){valve.t=Math.max(0.05,Math.min(0.95,((wx-ax)*dx+(wy-ay)*dy)/l2));}
+    }
+    scheduleDraw();return;
+  }
   if(drag&&!spaceHeld&&selSet.size<=1){
     const{x:wx,y:wy}=s2w(mp.x-doff.x,mp.y-doff.y);
     drag.wx=Math.round(wx/SNAP_GRID)*SNAP_GRID;drag.wy=Math.round(wy/SNAP_GRID)*SNAP_GRID;
@@ -349,6 +363,11 @@ cv.addEventListener('mousemove',e=>{
     scheduleDraw();return;
   }
   if(boxSelecting){boxEnd={x:mp.x,y:mp.y};drawSelBox();scheduleDraw();return;}
+  // cursor hint
+  if(mode==='sel'&&!spaceHeld){
+    const v=hitValve(mp.x,mp.y);
+    cv.style.cursor=v?'ew-resize':'default';
+  }
 });
 
 cv.addEventListener('dblclick',e=>{
@@ -363,7 +382,16 @@ cv.addEventListener('mousedown',e=>{
   if(e.button===1||spaceHeld){isPanning=true;panStart={x:sx,y:sy};cv.style.cursor='grabbing';return;}
   if(mode==='sel'){
     const v=hitValve(sx,sy);
-    if(v){if(e.shiftKey){selSet.has(v)?selSet.delete(v):selSet.add(v);sel=v;showProp(v);scheduleDraw();}else{selSet.clear();selItem(v);}return;}
+    if(v){
+      if(e.shiftKey){selSet.has(v)?selSet.delete(v):selSet.add(v);sel=v;showProp(v);scheduleDraw();}
+      else{
+        selSet.clear();selItem(v);
+        // Start drag along pipe
+        const pipe=v._pipe||pipes.find(p=>p.valve===v);
+        if(pipe)valveDrag={valve:v,pipe};
+      }
+      return;
+    }
     const n=hitN(sx,sy);
     if(n){
       if(e.shiftKey){selSet.has(n)?selSet.delete(n):selSet.add(n);sel=n;showProp(n);scheduleDraw();}
@@ -395,6 +423,7 @@ cv.addEventListener('mousedown',e=>{
 
 cv.addEventListener('mouseup',()=>{
   if(isPanning){isPanning=false;cv.style.cursor=mode==='sel'?'default':'crosshair';}
+  if(valveDrag){snapshot();valveDrag=null;cv.style.cursor='default';}
   if(multiDragStart){snapshot();multiDragStart=null;multiDragOffsets=[];}
   if(drag)drag=null;
   if(boxSelecting){
@@ -420,14 +449,24 @@ cvW.addEventListener('dragover',e=>e.preventDefault());
 cvW.addEventListener('drop',e=>{
   e.preventDefault();if(!ld)return;
   snapshot();
-  const r=cv.getBoundingClientRect();const{x:wx,y:wy}=s2w(e.clientX-r.left,e.clientY-r.top);
-  // Valve dropped on pipe → attach; else place as node
+  const r=cv.getBoundingClientRect();
+  const sx=e.clientX-r.left,sy=e.clientY-r.top;
+  const{x:wx,y:wy}=s2w(sx,sy);
+  // Valve dropped on pipe → attach at exact drop position (t)
   if(ld.startsWith('valve-')){
-    const ph=hitPipe(e.clientX-r.left,e.clientY-r.top);
-    if(ph&&!ph.pipe.valve){
-      const vn=mkN(ld,0,0);ph.pipe.valve=vn;nodes.push(vn);
+    const ph=hitPipe(sx,sy);
+    if(ph){
+      if(ph.pipe.valve){
+        showFlash('Pipe already has a valve','var(--red)');ld=null;return;
+      }
+      const vn=mkN(ld,0,0);
+      // store t=position along pipe where user dropped
+      vn.t=Math.max(0.05,Math.min(0.95,ph.t));
+      vn._pipe=ph.pipe;
+      ph.pipe.valve=vn;nodes.push(vn);
       selSet.clear();selItem(vn);scheduleDraw();ld=null;return;
     }
+    showFlash('Drop valve on a pipe','var(--yellow)');ld=null;return;
   }
   const n=mkN(ld,Math.round(wx/SNAP_GRID)*SNAP_GRID,Math.round(wy/SNAP_GRID)*SNAP_GRID);
   nodes.push(n);selSet.clear();selItem(n);scheduleDraw();ld=null;
@@ -441,7 +480,53 @@ document.getElementById('lib-search').addEventListener('input',function(){
   });
 });
 
-// ── BUTTON BINDINGS ───────────────────────────────────────
+// ── PANEL RESIZE (splitters) ──────────────────────────────
+function makeSplitter(splitterId, targetId, side, minPx, maxPx){
+  const spl=document.getElementById(splitterId);
+  const tgt=document.getElementById(targetId);
+  if(!spl||!tgt)return;
+  let active=false,startX=0,startW=0;
+  spl.addEventListener('mousedown',e=>{
+    active=true;startX=e.clientX;startW=tgt.offsetWidth;
+    spl.classList.add('active');
+    document.body.style.cursor='col-resize';
+    document.body.style.userSelect='none';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!active)return;
+    const delta=side==='right'?(startX-e.clientX):(e.clientX-startX);
+    const nw=Math.max(minPx,Math.min(maxPx,startW+delta));
+    tgt.style.width=nw+'px';
+    tgt.style.minWidth=nw+'px';
+    tgt.style.maxWidth=nw+'px';
+    scheduleDraw(); // redraw after resize
+  });
+  document.addEventListener('mouseup',()=>{
+    if(active){active=false;spl.classList.remove('active');document.body.style.cursor='';document.body.style.userSelect='';}
+  });
+}
+
+// Also allow results table vertical resize
+function makeHSplitter(splitterId, targetId, minPx, maxPx){
+  const spl=document.getElementById(splitterId);
+  const tgt=document.getElementById(targetId);
+  if(!spl||!tgt)return;
+  let active=false,startY=0,startH=0;
+  spl.addEventListener('mousedown',e=>{
+    active=true;startY=e.clientY;startH=tgt.offsetHeight;
+    spl.classList.add('active');document.body.style.cursor='row-resize';
+    document.body.style.userSelect='none';e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!active)return;
+    const nh=Math.max(minPx,Math.min(maxPx,startH+(startY-e.clientY)));
+    tgt.style.maxHeight=nh+'px';
+  });
+  document.addEventListener('mouseup',()=>{
+    if(active){active=false;spl.classList.remove('active');document.body.style.cursor='';document.body.style.userSelect='';}
+  });
+}
 document.getElementById('bsel').onclick=()=>setMode('sel');
 document.getElementById('bpip').onclick=()=>setMode('pip');
 document.getElementById('bcalc').onclick=calculate;
@@ -498,6 +583,10 @@ document.getElementById('bexport').onclick=function(){
 // ── INIT ──────────────────────────────────────────────────
 // Restore dark mode preference
 if(localStorage.getItem('hydraulic_dark')==='1')applyDarkMode(true);
+
+// Init panel splitters
+makeSplitter('spl-lib',  'lib',  'left',  60,  300);   // library: 60–300px
+makeSplitter('spl-rp',   'rp',   'right', 160, 450);   // right panel: 160–450px
 
 updateUndoRedo();
 setMode('sel');

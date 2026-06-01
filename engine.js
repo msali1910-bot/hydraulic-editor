@@ -451,12 +451,15 @@ function drawPipe(p){
     }
   }
   if(p.valve){
-    const vx=(sa.x+sb.x)/2,vy=(sa.y+sb.y)/2;
+    // p.valve.t = 0..1 along pipe (default 0.5 = midpoint)
+    const vt=p.valve.t!==undefined?p.valve.t:0.5;
+    const vx=sa.x+(sb.x-sa.x)*vt, vy=sa.y+(sb.y-sa.y)*vt;
     drawValveSymbol(vx,vy,ang,p.valve.valveType||'gate',p.valve===sel,dark);
     if(zoom>0.5){
       const vlbl=p.valve.cl||p.valve.label;
-      qLbl(vlbl,s2w(vx,vy).x,s2w(vx,vy).y,dark?'#a8890a':'#b45309',1);
-      if(calc&&p.valve.pdrop!==undefined)qLbl('ΔP='+p.valve.pdrop.toFixed(2)+'m',s2w(vx,vy).x,s2w(vx,vy).y,dark?'#facc15':'#d97706',2);
+      const vw=s2w(vx,vy);
+      qLbl(vlbl,vw.x,vw.y,dark?'#a8890a':'#92400e',1);
+      if(calc&&p.valve.pdrop!==undefined)qLbl('ΔP='+p.valve.pdrop.toFixed(2)+'m',vw.x,vw.y,dark?'#facc15':'#d97706',2);
     }
   }
 }
@@ -634,7 +637,17 @@ function hitPipe(sx,sy){
 }
 function hitValve(sx,sy){
   const{x:wx,y:wy}=s2w(sx,sy);
-  for(const p of pipes){if(p.valve){const vx=(p.nA.wx+p.nB.wx)/2,vy=(p.nA.wy+p.nB.wy)/2;if(Math.hypot(wx-vx,wy-vy)<VALVE_HIT_R/zoom)return p.valve;}}return null;
+  for(const p of pipes){
+    if(p.valve&&p.nA&&p.nB){
+      const vt=p.valve.t!==undefined?p.valve.t:0.5;
+      const vx=p.nA.wx+(p.nB.wx-p.nA.wx)*vt;
+      const vy=p.nA.wy+(p.nB.wy-p.nA.wy)*vt;
+      if(Math.hypot(wx-vx,wy-vy)<VALVE_HIT_R/zoom){
+        p.valve._pipe=p; // attach parent pipe ref for dragging
+        return p.valve;
+      }
+    }
+  }return null;
 }
 function nodesInBox(x1,y1,x2,y2){
   const w1=s2w(x1,y1),w2=s2w(x2,y2);const minX=Math.min(w1.x,w2.x),maxX=Math.max(w1.x,w2.x),minY=Math.min(w1.y,w2.y),maxY=Math.max(w1.y,w2.y);
