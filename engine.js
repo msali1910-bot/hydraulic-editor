@@ -181,7 +181,7 @@ function autoLoad(){
   }catch(e){}
 }
 function saveProject(){
-  const data={version:14,nodes:nodes.map(deepNode),pipes:pipes.map(p=>({...p,nA:p.nA?.id,nB:p.nB?.id,valve:p.valve?.id})),ncnt:{...ncnt},settings:{calcMethod:document.getElementById('calc-method').value,fric:document.getElementById('fsl').value,hwC:document.getElementById('hw-c').value,unitsSys:document.getElementById('units-system').value}};
+  const data={version:14,nodes:nodes.map(deepNode),pipes:pipes.map(p=>({...p,nA:p.nA?.id,nB:p.nB?.id,valve:p.valve?.id})),ncnt:{...ncnt},settings:{calcMethod:document.getElementById('calc-method').value,fric:document.getElementById('fsl').value,hwC:document.getElementById('hw-c').value,pUnit:_pUnit,fUnit:_fUnit}};
   const a=document.createElement('a');a.download=(projectTabs.find(p=>p.id===activeProjId)?.name||'hydraulic')+'.json';a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.click();
   showFlash('💾 Saved','#2f9e44');
 }
@@ -196,6 +196,8 @@ function loadProject(file){
         document.getElementById('fval').textContent=(data.settings.fric||8)+'%';
         document.getElementById('hw-c').value=data.settings.hwC||130;
         if(data.settings.unitsSys)applyUnits(data.settings.unitsSys);
+        if(data.settings.pUnit)_pUnit=data.settings.pUnit;
+        if(data.settings.fUnit)_fUnit=data.settings.fUnit;
         document.getElementById('calc-method').dispatchEvent(new Event('change'));
       }
       restoreSnap(JSON.stringify({nodes:data.nodes,pipes:data.pipes,ncnt:data.ncnt||{}}));
@@ -208,30 +210,34 @@ function loadProject(file){
 }
 
 // ── GLOBAL UNITS ───────────────────────────────────────────
-const UNIT_PRESETS={
-  'si_m':{p:'m',f:'ls'},'si_bar':{p:'bar',f:'m3h'},
-  'si_kpa':{p:'kpa',f:'ls'},'imperial':{p:'psi',f:'gpm'}
-};
+// _pUnit and _fUnit are set directly by the popup (app.js)
 let _pUnit='m',_fUnit='ls';
+// applyUnits kept for backward compat (load from file)
 function applyUnits(sys){
-  const pr=UNIT_PRESETS[sys]||UNIT_PRESETS['si_m'];
-  _pUnit=pr.p;_fUnit=pr.f;
-  document.getElementById('units-system').value=sys;
+  const map={'si_m':{p:'m',f:'ls'},'si_bar':{p:'bar',f:'m3h'},'si_kpa':{p:'kpa',f:'ls'},'imperial':{p:'psi',f:'gpm'}};
+  const pr=map[sys]||map['si_m'];_pUnit=pr.p;_fUnit=pr.f;
+  // sync radios if popup exists
+  const pu=document.querySelector(`input[name="punit"][value="${_pUnit}"]`);if(pu)pu.checked=true;
+  const fu=document.querySelector(`input[name="funit"][value="${_fUnit}"]`);if(fu)fu.checked=true;
 }
 const gPU=()=>_pUnit;const gFU=()=>_fUnit;
 function m2b(m){return m/10.2;}
 function pd(bar){
-  const u=gPU(),v=u==='m'?bar*10.2:u==='psi'?bar*14.504:u==='kpa'?bar*100:u==='gpm'?bar*14.504:bar;
-  const label=u==='m'?'m H₂O':u==='psi'?'psi':u==='kpa'?'kPa':u==='gpm'?'psi':'bar';
-  return v.toFixed(2)+' '+label;
+  const u=gPU();
+  if(u==='m')   return(bar*10.2).toFixed(2)+' m';
+  if(u==='psi') return(bar*14.504).toFixed(2)+' psi';
+  if(u==='kpa') return(bar*100).toFixed(1)+' kPa';
+  if(u==='mpa') return(bar/10).toFixed(4)+' MPa';
+  if(u==='atm') return(bar/1.01325).toFixed(3)+' atm';
+  return bar.toFixed(3)+' bar';
 }
-function pl(){const u=gPU();return u==='m'?'m H₂O':u==='psi'?'psi':u==='kpa'?'kPa':'bar';}
-function p2d(bar){const u=gPU();return u==='m'?+(bar*10.2).toFixed(2):u==='psi'?+(bar*14.504).toFixed(2):u==='kpa'?+(bar*100).toFixed(1):+bar.toFixed(3);}
-function d2p(v){const u=gPU();return u==='m'?v/10.2:u==='psi'?v/14.504:u==='kpa'?v/100:v;}
-function fd(ls){const u=gFU();return u==='lm'?(ls*60).toFixed(2)+' L/m':u==='m3h'?(ls*3.6).toFixed(3)+' m³/h':u==='gpm'?(ls*15.850).toFixed(2)+' gpm':ls.toFixed(3)+' L/s';}
-function fl(){const u=gFU();return u==='lm'?'L/min':u==='m3h'?'m³/h':u==='gpm'?'gpm':'L/s';}
-function f2d(ls){const u=gFU();return u==='lm'?+(ls*60).toFixed(3):u==='m3h'?+(ls*3.6).toFixed(4):u==='gpm'?+(ls*15.850).toFixed(3):+ls.toFixed(4);}
-function d2f(v){const u=gFU();return u==='lm'?v/60:u==='m3h'?v/3.6:u==='gpm'?v/15.850:v;}
+function pl(){const u=gPU();return u==='m'?'m':u==='psi'?'psi':u==='kpa'?'kPa':u==='mpa'?'MPa':u==='atm'?'atm':'bar';}
+function p2d(bar){const u=gPU();return u==='m'?+(bar*10.2).toFixed(2):u==='psi'?+(bar*14.504).toFixed(2):u==='kpa'?+(bar*100).toFixed(1):u==='mpa'?+(bar/10).toFixed(4):u==='atm'?+(bar/1.01325).toFixed(3):+bar.toFixed(3);}
+function d2p(v){const u=gPU();return u==='m'?v/10.2:u==='psi'?v/14.504:u==='kpa'?v/100:u==='mpa'?v*10:u==='atm'?v*1.01325:v;}
+function fd(ls){const u=gFU();return u==='lm'?(ls*60).toFixed(2)+' L/min':u==='m3h'?(ls*3.6).toFixed(3)+' m³/h':u==='gpm'?(ls*15.850).toFixed(2)+' gpm':u==='m3s'?ls.toFixed(5)+' m³/s':ls.toFixed(3)+' L/s';}
+function fl(){const u=gFU();return u==='lm'?'L/min':u==='m3h'?'m³/h':u==='gpm'?'gpm':u==='m3s'?'m³/s':'L/s';}
+function f2d(ls){const u=gFU();return u==='lm'?+(ls*60).toFixed(3):u==='m3h'?+(ls*3.6).toFixed(4):u==='gpm'?+(ls*15.850).toFixed(3):u==='m3s'?+ls.toFixed(5):+ls.toFixed(4);}
+function d2f(v){const u=gFU();return u==='lm'?v/60:u==='m3h'?v/3.6:u==='gpm'?v/15.850:u==='m3s'?v:v;}
 
 // ── IPC FU TABLE ───────────────────────────────────────────
 const FU_T=[[0,0],[1,.05],[2,.07],[4,.11],[6,.14],[10,.18],[20,.27],[30,.33],[50,.42],[100,.60],[200,.85],[500,1.38],[1000,1.95]];
@@ -326,55 +332,98 @@ function drawArrow(x,y,ang,clr){
   ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-6,-3.5);ctx.lineTo(-6,3.5);ctx.closePath();ctx.fill();ctx.restore();
 }
 
-// ── VALVE SYMBOL DISPATCHER ────────────────────────────────
+// ── VALVE SYMBOL DISPATCHER — CAD P&ID style (matching reference image) ──────
 function drawValveSymbol(x,y,ang,vt,isSel,dark){
   ctx.save();ctx.translate(x,y);ctx.rotate(ang);
-  const sc=isSel?'#fff':(dark?'#facc15':'#d97706');
-  const fc=isSel?'rgba(255,255,255,.15)':(dark?'#161000':'#fffbeb');
-  ctx.strokeStyle=sc;ctx.lineWidth=1.4;
-  if(vt==='gate'||vt==='reducing_inner'){
-    ctx.fillStyle=fc;ctx.beginPath();ctx.moveTo(-10,-6);ctx.lineTo(0,0);ctx.lineTo(-10,6);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.beginPath();ctx.moveTo(10,-6);ctx.lineTo(0,0);ctx.lineTo(10,6);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,-3);ctx.lineTo(0,-10);ctx.moveTo(-4,-10);ctx.lineTo(4,-10);ctx.stroke();
+  const sc =isSel?'#1971c2':(dark?'#facc15':'#374151');
+  const sc2=isSel?'#1971c2':(dark?'#f87171':'#e03131'); // red for PRV
+  const sc3=isSel?'#1971c2':(dark?'#c084fc':'#7048e8'); // purple for PRS
+  const fc =dark?'rgba(8,8,8,.8)':'rgba(255,255,255,.92)';
+  ctx.setLineDash([]);
+
+  if(vt==='gate'){
+    // ✦ Gate valve — bowtie (two filled triangles, stem + wheel)
+    ctx.strokeStyle=sc;ctx.fillStyle=fc;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-12,-8);ctx.lineTo(0,0);ctx.lineTo(-12,8);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(12,-8);ctx.lineTo(0,0);ctx.lineTo(12,8);ctx.closePath();ctx.fill();ctx.stroke();
+    // stem
+    ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-13);ctx.stroke();
+    // handwheel circle
+    ctx.beginPath();ctx.arc(0,-16,4,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // wheel spokes
+    ctx.beginPath();ctx.moveTo(-4,-16);ctx.lineTo(4,-16);ctx.moveTo(0,-20);ctx.lineTo(0,-12);ctx.stroke();
+
   } else if(vt==='ball'){
-    ctx.fillStyle=fc;ctx.beginPath();ctx.arc(0,0,8,0,Math.PI*2);ctx.fill();ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(0,8);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(0,-13);ctx.moveTo(-4,-13);ctx.lineTo(4,-13);ctx.stroke();
+    // ✦ Ball valve — circle with through line + rotary handle
+    ctx.strokeStyle=sc;ctx.fillStyle=fc;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // through-bore (horizontal)
+    ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(9,0);ctx.stroke();
+    // handle (flat bar on top)
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(0,-17);ctx.stroke();
+    ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-6,-17);ctx.lineTo(6,-17);ctx.stroke();
+    ctx.lineCap='butt';
+    // center fill dot
+    ctx.fillStyle=sc;ctx.beginPath();ctx.arc(0,0,2.5,0,Math.PI*2);ctx.fill();
+
   } else if(vt==='check'){
-    ctx.fillStyle=fc;ctx.beginPath();ctx.moveTo(-10,-7);ctx.lineTo(8,0);ctx.lineTo(-10,7);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,-7);ctx.lineTo(8,7);ctx.stroke();
+    // ✦ Check valve — half-moon / clapper style (from image: curved body)
+    ctx.strokeStyle=sc;ctx.fillStyle=fc;ctx.lineWidth=1.5;
+    // circle body
+    ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // clapper (diagonal line = flap)
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-4,-9);ctx.lineTo(4,9);ctx.stroke();
+    // flow arrow inside
+    ctx.lineWidth=1;ctx.fillStyle=sc;
+    ctx.beginPath();ctx.moveTo(-7,0);ctx.lineTo(-2,-4);ctx.lineTo(-2,4);ctx.closePath();ctx.fill();
+
   } else if(vt==='butterfly'){
-    ctx.fillStyle=fc;ctx.beginPath();ctx.ellipse(0,0,10,7,0,0,Math.PI*2);ctx.fill();ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(0,7);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(0,-12);ctx.moveTo(-4,-12);ctx.lineTo(4,-12);ctx.stroke();
-  } else if(vt==='relief'){
-    // PRV: triangle pointing right + spring on top (IEC/BS symbol)
-    ctx.strokeStyle=isSel?'#fff':(dark?'#f87171':'#e03131');
-    ctx.fillStyle=isSel?'rgba(255,255,255,.15)':(dark?'#2a0d0d':'#fff5f5');
-    // body triangle
-    ctx.beginPath();ctx.moveTo(-11,-7);ctx.lineTo(9,0);ctx.lineTo(-11,7);ctx.closePath();ctx.fill();ctx.stroke();
-    // closing line
-    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(9,-8);ctx.lineTo(9,8);ctx.stroke();
-    // spring coils above
+    // ✦ Butterfly valve — circle body + two blade arcs + perpendicular stem
+    ctx.strokeStyle=sc;ctx.fillStyle=fc;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // blades (two S-curves representing disc in 45° position)
+    ctx.fillStyle=dark?'rgba(250,204,21,.25)':'rgba(55,65,81,.15)';
     ctx.lineWidth=1.2;
-    ctx.beginPath();
-    ctx.moveTo(-1,-8);
-    for(let i=0;i<3;i++){ctx.lineTo(-1+3*(i*2+1),-12);ctx.lineTo(-1+3*(i*2+2),-8);}
+    ctx.beginPath();ctx.moveTo(0,-9);ctx.bezierCurveTo(-9,-3,-9,3,0,9);ctx.bezierCurveTo(2,3,2,-3,0,-9);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,-9);ctx.bezierCurveTo(9,-3,9,3,0,9);ctx.bezierCurveTo(-2,3,-2,-3,0,-9);ctx.fill();ctx.stroke();
+    // stem + handle
+    ctx.strokeStyle=sc;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(0,-10);ctx.lineTo(0,-16);ctx.stroke();
+    ctx.lineWidth=2.5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-5,-16);ctx.lineTo(5,-16);ctx.stroke();
+    ctx.lineCap='butt';
+    // center axle dot
+    ctx.fillStyle=sc;ctx.beginPath();ctx.arc(0,0,2,0,Math.PI*2);ctx.fill();
+
+  } else if(vt==='relief'){
+    // ✦ PRV — gate valve body + spring actuator on top
+    // body (bowtie)
+    ctx.strokeStyle=sc2;ctx.fillStyle=dark?'rgba(30,4,4,.9)':'rgba(255,245,245,.95)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-11,-7);ctx.lineTo(0,0);ctx.lineTo(-11,7);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(11,-7);ctx.lineTo(0,0);ctx.lineTo(11,7);ctx.closePath();ctx.fill();ctx.stroke();
+    // short stem up
+    ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(0,-10);ctx.stroke();
+    // spring (zigzag coils)
+    ctx.beginPath();ctx.moveTo(0,-10);
+    ctx.lineTo(-4,-13);ctx.lineTo(4,-16);ctx.lineTo(-4,-19);ctx.lineTo(4,-22);ctx.lineTo(0,-25);
     ctx.stroke();
-    // top cap
-    ctx.beginPath();ctx.moveTo(-2,-12);ctx.lineTo(16,-12);ctx.stroke();
+    // cap line
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-5,-25);ctx.lineTo(5,-25);ctx.stroke();
+    // "RV" label inside
+    if(zoom>0.6){ctx.font='bold 6px sans-serif';ctx.fillStyle=sc2;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('RV',0,0);}
+
   } else if(vt==='reducing'){
-    // PRS: box with globe valve inside (diaphragm symbol)
-    ctx.strokeStyle=isSel?'#fff':(dark?'#c084fc':'#7048e8');
-    ctx.fillStyle=isSel?'rgba(255,255,255,.08)':(dark?'#1e1535':'#f3f0ff');
-    // outer box
-    ctx.lineWidth=1.3;ctx.beginPath();ctx.rect(-14,-9,28,18);ctx.fill();ctx.stroke();
-    // globe valve triangle inside
-    ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(-8,-6);ctx.lineTo(4,0);ctx.lineTo(-8,6);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.beginPath();ctx.moveTo(4,-6);ctx.lineTo(4,6);ctx.stroke();
-    // diaphragm circle
-    ctx.beginPath();ctx.arc(4,-8,3,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // ✦ PRS — dashed rectangle enclosing a gate valve + diaphragm actuator
+    ctx.strokeStyle=sc3;ctx.fillStyle=dark?'rgba(30,21,53,.9)':'rgba(243,240,255,.95)';
+    ctx.lineWidth=1.3;ctx.setLineDash([3,2]);
+    ctx.beginPath();ctx.rect(-18,-14,36,28);ctx.fill();ctx.stroke();
+    ctx.setLineDash([]);
+    // inner gate valve (smaller, same color)
+    ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(-9,-6);ctx.lineTo(0,0);ctx.lineTo(-9,6);ctx.closePath();ctx.fillStyle=dark?'rgba(8,8,8,.8)':'rgba(255,255,255,.9)';ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(9,-6);ctx.lineTo(0,0);ctx.lineTo(9,6);ctx.closePath();ctx.fill();ctx.stroke();
+    // diaphragm actuator (circle on stem)
+    ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(0,-14);ctx.stroke();
+    ctx.beginPath();ctx.arc(0,-17,3,0,Math.PI*2);ctx.fillStyle=sc3;ctx.fill();ctx.stroke();
   }
   ctx.restore();
 }

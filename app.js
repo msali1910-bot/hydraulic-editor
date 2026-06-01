@@ -38,27 +38,33 @@ document.getElementById('bdark').onclick=()=>{
 };
 
 // ── UNITS SYSTEM ──────────────────────────────────────────
-// Units popup
-function openUnits(){document.getElementById('units-popup').style.display='';}
-function closeUnits(){document.getElementById('units-popup').style.display='none';}
+let _powUnit='kw', _lenUnit='m';
+
+function openUnits(){
+  // Sync radios to current state
+  ['punit','funit','powunit','lenunit'].forEach(name=>{
+    const curVal={punit:_pUnit,funit:_fUnit,powunit:_powUnit,lenunit:_lenUnit}[name]||'m';
+    const el=document.querySelector(`input[name="${name}"][value="${curVal}"]`);
+    if(el)el.checked=true;
+  });
+  const pop=document.getElementById('units-popup');
+  if(pop){pop.style.display='block';}
+}
+function closeUnits(){
+  const pop=document.getElementById('units-popup');
+  if(pop)pop.style.display='none';
+}
 function applyUnitsFromPopup(){
-  _pUnit=document.querySelector('input[name="punit"]:checked')?.value||'m';
-  _fUnit=document.querySelector('input[name="funit"]:checked')?.value||'ls';
-  _powUnit=document.querySelector('input[name="powunit"]:checked')?.value||'kw';
-  _lenUnit=document.querySelector('input[name="lenunit"]:checked')?.value||'m';
+  _pUnit  = document.querySelector('input[name="punit"]:checked')?.value   || 'm';
+  _fUnit  = document.querySelector('input[name="funit"]:checked')?.value   || 'ls';
+  _powUnit= document.querySelector('input[name="powunit"]:checked')?.value || 'kw';
+  _lenUnit= document.querySelector('input[name="lenunit"]:checked')?.value || 'm';
   closeUnits();
   if(sel)showProp(sel);
   scheduleDraw();
-  showFlash('Units updated','var(--blue)');
+  showFlash('✓ Units updated', 'var(--blue)');
 }
-// Sync radios to current values when opening
-document.getElementById('bunits').onclick=()=>{
-  const pu=document.querySelector(`input[name="punit"][value="${_pUnit}"]`);if(pu)pu.checked=true;
-  const fu=document.querySelector(`input[name="funit"][value="${_fUnit}"]`);if(fu)fu.checked=true;
-  const pw=document.querySelector(`input[name="powunit"][value="${_powUnit||'kw'}"]`);if(pw)pw.checked=true;
-  const lu=document.querySelector(`input[name="lenunit"][value="${_lenUnit||'m'}"]`);if(lu)lu.checked=true;
-  openUnits();
-};
+document.getElementById('bunits').addEventListener('click', openUnits);
 
 // ── MINIMAP ───────────────────────────────────────────────
 const mm=document.getElementById('minimap');
