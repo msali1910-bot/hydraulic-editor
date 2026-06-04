@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════════
+﻿// ════════════════════════════════════════════════════════
 //  app.js — Hydraulic P&ID v14
 //  UI + Events + Minimap + StatusBar + Init
 //  لو عايز تعدل في الأزرار أو الـ shortcuts → ابعت الملف ده
@@ -309,6 +309,7 @@ document.getElementById('zrst').onclick=()=>{zoom=1;panX=0;panY=0;updateZoomPct(
 
 // ── KEYBOARD ──────────────────────────────────────────────
 let spaceHeld=false;
+let valveDrag=null;
 document.addEventListener('keydown',e=>{
   const inp=e.target.matches('input,select,textarea');
   if(e.code==='Space'&&!inp){spaceHeld=true;if(mode==='sel')cv.style.cursor='grab';}
@@ -389,6 +390,7 @@ cv.addEventListener('mousedown',e=>{
       if(!e.shiftKey){
         const pipe=v._pipe||pipes.find(p=>p.valve===v);
         if(pipe){
+          snapshot();
           valveDrag={valve:v,pipe,startT:v.t||0.5};
           cv.style.cursor='ew-resize';
           document.body.style.userSelect='none';
@@ -429,7 +431,7 @@ cv.addEventListener('mousedown',e=>{
 document.addEventListener('mouseup',e=>{
   if(isPanning){isPanning=false;cv.style.cursor='default';}
   if(valveDrag){
-    snapshot();
+    if(Math.abs((valveDrag.valve.t||0.5)-valveDrag.startT)>0.0001)calc=false;
     valveDrag=null;
     cv.style.cursor='default';
     document.body.style.userSelect='';
