@@ -1,11 +1,10 @@
-﻿// ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  engine.js — Hydraulic P&ID v14
 //  State + Calc + Draw  |  لو عايز تعدل حسابات → ابعت الملف ده
 // ════════════════════════════════════════════════════════
 
 // ── CONSTANTS ─────────────────────────────────────────────
 const SNAP_GRID=20,HIT_RADIUS=28,VALVE_HIT_R=18,PIPE_HIT_W=13;
-const PIPE_BRIDGE_RADIUS=10,PIPE_BRIDGE_GAP=7;
 const PIPE_HIT_T_MIN=0.08,PIPE_HIT_T_MAX=0.92;
 const LABEL_ZOOM_MIN=0.45,LABEL_ZOOM_SML=0.32,GRID_STEP=40;
 const ZOOM_MIN=0.08,ZOOM_MAX=8,HISTORY_LIMIT=30;
@@ -442,40 +441,6 @@ function drawValveSymbol(x,y,ang,vt,isSel,dark){
 }
 
 // ── DRAW PIPE ──────────────────────────────────────────────
-function pipeIntersection(a,b){
-  if(!a?.nA||!a?.nB||!b?.nA||!b?.nB)return null;
-  if(a.nA===b.nA||a.nA===b.nB||a.nB===b.nA||a.nB===b.nB)return null;
-  const x1=a.nA.wx,y1=a.nA.wy,x2=a.nB.wx,y2=a.nB.wy;
-  const x3=b.nA.wx,y3=b.nA.wy,x4=b.nB.wx,y4=b.nB.wy;
-  const den=(x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
-  if(Math.abs(den)<1e-6)return null;
-  const t=((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4))/den;
-  const u=((x1-x3)*(y1-y2)-(y1-y3)*(x1-x2))/den;
-  if(t<=PIPE_HIT_T_MIN||t>=PIPE_HIT_T_MAX||u<=PIPE_HIT_T_MIN||u>=PIPE_HIT_T_MAX)return null;
-  return {t,u,wx:x1+(x2-x1)*t,wy:y1+(y2-y1)*t};
-}
-function pipeBridgeSpots(p){
-  const spots=[],pIndex=pipes.indexOf(p);
-  pipes.forEach((other,idx)=>{
-    if(other===p||idx>=pIndex)return;
-    const hit=pipeIntersection(p,other);
-    if(hit)spots.push(hit);
-  });
-  spots.sort((a,b)=>a.t-b.t);
-  return spots;
-}
-function drawPipeBridge(x,y,ang,clr,dark,isSel){
-  const r=PIPE_BRIDGE_RADIUS*zoom,g=PIPE_BRIDGE_GAP*zoom;
-  const bg=dark?'#080a0d':'#f8f9fa';
-  ctx.save();ctx.translate(x,y);ctx.rotate(ang);
-  ctx.strokeStyle=bg;ctx.lineWidth=(isSel?7:6);ctx.setLineDash([]);
-  ctx.beginPath();ctx.moveTo(-r-g,0);ctx.lineTo(r+g,0);ctx.stroke();
-  ctx.strokeStyle=isSel?'#1971c2':clr;ctx.lineWidth=isSel?3:2;
-  ctx.beginPath();ctx.moveTo(-r-g,0);ctx.lineTo(-r,0);ctx.stroke();
-  ctx.beginPath();ctx.arc(0,0,r,Math.PI,0,false);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(r+g,0);ctx.stroke();
-  ctx.restore();
-}
 function drawPipe(p){
   if(!p.nA||!p.nB)return;
   const sa=w2s(p.nA.wx,p.nA.wy),sb=w2s(p.nB.wx,p.nB.wy);
@@ -484,7 +449,6 @@ function drawPipe(p){
   ctx.strokeStyle=isSel?'#1971c2':clr;ctx.lineWidth=isSel?3:2;ctx.setLineDash([]);
   ctx.beginPath();ctx.moveTo(sa.x,sa.y);ctx.lineTo(sb.x,sb.y);ctx.stroke();
   const ang=Math.atan2(sb.y-sa.y,sb.x-sa.x),mx=(sa.x+sb.x)/2,my=(sa.y+sb.y)/2;
-  pipeBridgeSpots(p).forEach(hit=>{const s=w2s(hit.wx,hit.wy);drawPipeBridge(s.x,s.y,ang,clr,dark,isSel);});
   drawArrow(mx,my,ang,clr);
   if(zoom>LABEL_ZOOM_MIN){
     const perp=ang-Math.PI/2,ox=Math.cos(perp)*14,oy=Math.sin(perp)*14;
