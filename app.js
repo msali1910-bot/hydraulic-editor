@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════════
+﻿// ════════════════════════════════════════════════════════
 //  app.js — Hydraulic P&ID v14
 //  UI + Events + Minimap + StatusBar + Init
 //  لو عايز تعدل في الأزرار أو الـ shortcuts → ابعت الملف ده
@@ -309,6 +309,8 @@ document.getElementById('zrst').onclick=()=>{zoom=1;panX=0;panY=0;updateZoomPct(
 
 // ── KEYBOARD ──────────────────────────────────────────────
 let spaceHeld=false;
+let valveDrag=null;
+let valvePointerId=null,skipMouseDown=false;
 document.addEventListener('keydown',e=>{
   const inp=e.target.matches('input,select,textarea');
   if(e.code==='Space'&&!inp){spaceHeld=true;if(mode==='sel')cv.style.cursor='grab';}
@@ -329,6 +331,45 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{if(e.code==='Space'){spaceHeld=false;if(mode==='sel')cv.style.cursor='default';}});
 
+function updateValveDragFromClient(clientX,clientY){
+  if(!valveDrag)return false;
+  const r=cv.getBoundingClientRect();
+  mp={x:clientX-r.left,y:clientY-r.top};
+  updateCoord(mp.x,mp.y);
+  const{valve,pipe}=valveDrag;
+  if(pipe&&pipe.nA&&pipe.nB){
+    const{x:wx,y:wy}=s2w(mp.x,mp.y);
+    const ax=pipe.nA.wx,ay=pipe.nA.wy,bx=pipe.nB.wx,by=pipe.nB.wy;
+    const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
+    if(l2>0){
+      valve.t=Math.max(0.05,Math.min(0.95,((wx-ax)*dx+(wy-ay)*dy)/l2));
+      valve._pipe=pipe;
+      calc=false;
+    }
+  }
+  scheduleDraw();
+  return true;
+}
+function beginValveDrag(v,pipe,pointerId,clientX,clientY){
+  if(!v||!pipe)return false;
+  snapshot();
+  valveDrag={valve:v,pipe,startT:v.t!==undefined?v.t:0.5};
+  valvePointerId=pointerId;
+  selSet.clear();selItem(v);
+  cv.style.cursor='ew-resize';
+  document.body.style.userSelect='none';
+  updateValveDragFromClient(clientX,clientY);
+  return true;
+}
+function endValveDrag(){
+  if(!valveDrag)return false;
+  valveDrag=null;valvePointerId=null;
+  cv.style.cursor='default';
+  document.body.style.userSelect='';
+  scheduleDraw();
+  return true;
+}
+
 // mousemove on DOCUMENT so dragging outside canvas still works
 document.addEventListener('mousemove',e=>{
   const r=cv.getBoundingClientRect();
@@ -336,17 +377,8 @@ document.addEventListener('mousemove',e=>{
   updateCoord(mp.x,mp.y);
   if(isPanning){panX+=mp.x-panStart.x;panY+=mp.y-panStart.y;panStart={...mp};scheduleDraw();return;}
   if(mode==='pip'&&pipeSt)scheduleDraw();
-  // valve drag along pipe — works even outside canvas
-  if(valveDrag){
-    const{valve,pipe}=valveDrag;
-    if(pipe&&pipe.nA&&pipe.nB){
-      const{x:wx,y:wy}=s2w(mp.x,mp.y);
-      const ax=pipe.nA.wx,ay=pipe.nA.wy,bx=pipe.nB.wx,by=pipe.nB.wy;
-      const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
-      if(l2>0){valve.t=Math.max(0.05,Math.min(0.95,((wx-ax)*dx+(wy-ay)*dy)/l2));}
-    }
-    scheduleDraw();return;
-  }
+  // valve drag along pipe - works even outside canvas
+  if(updateValveDragFromClient(e.clientX,e.clientY))return;
   if(drag&&!spaceHeld&&selSet.size<=1){
     const{x:wx,y:wy}=s2w(mp.x-doff.x,mp.y-doff.y);
     drag.wx=Math.round(wx/SNAP_GRID)*SNAP_GRID;drag.wy=Math.round(wy/SNAP_GRID)*SNAP_GRID;
@@ -376,7 +408,30 @@ cv.addEventListener('dblclick',e=>{
   if(n&&n.type==='note'){openNoteEditor(n);}
 });
 
+cv.addEventListener('pointerdown',e=>{
+  if(e.button!==0||mode!=='sel'||spaceHeld)return;
+  const r=cv.getBoundingClientRect();const sx=e.clientX-r.left,sy=e.clientY-r.top;
+  const v=hitValve(sx,sy);if(!v)return;
+  const pipe=v._pipe||pipes.find(p=>p.valve===v);if(!pipe)return;
+  e.preventDefault();e.stopPropagation();skipMouseDown=true;
+  if(cv.setPointerCapture){try{cv.setPointerCapture(e.pointerId);}catch(_){}}
+  beginValveDrag(v,pipe,e.pointerId,e.clientX,e.clientY);
+});
+cv.addEventListener('pointermove',e=>{
+  if(valveDrag&&valvePointerId===e.pointerId){e.preventDefault();updateValveDragFromClient(e.clientX,e.clientY);}
+});
+function finishValvePointer(e){
+  if(valveDrag&&(valvePointerId===null||valvePointerId===e.pointerId)){
+    e.preventDefault();
+    if(cv.releasePointerCapture){try{cv.releasePointerCapture(e.pointerId);}catch(_){}}
+    endValveDrag();
+  }
+}
+cv.addEventListener('pointerup',finishValvePointer);
+cv.addEventListener('pointercancel',finishValvePointer);
+
 cv.addEventListener('mousedown',e=>{
+  if(skipMouseDown){skipMouseDown=false;return;}
   const r=cv.getBoundingClientRect();const sx=e.clientX-r.left,sy=e.clientY-r.top;
   mp={x:sx,y:sy};
   if(e.button===1||spaceHeld){isPanning=true;panStart={x:sx,y:sy};cv.style.cursor='grabbing';return;}
@@ -389,9 +444,7 @@ cv.addEventListener('mousedown',e=>{
       if(!e.shiftKey){
         const pipe=v._pipe||pipes.find(p=>p.valve===v);
         if(pipe){
-          valveDrag={valve:v,pipe,startT:v.t||0.5};
-          cv.style.cursor='ew-resize';
-          document.body.style.userSelect='none';
+          beginValveDrag(v,pipe,null,e.clientX,e.clientY);
         }
       }
       return;
@@ -428,12 +481,7 @@ cv.addEventListener('mousedown',e=>{
 // mouseup on DOCUMENT so releasing outside canvas still stops drag
 document.addEventListener('mouseup',e=>{
   if(isPanning){isPanning=false;cv.style.cursor='default';}
-  if(valveDrag){
-    snapshot();
-    valveDrag=null;
-    cv.style.cursor='default';
-    document.body.style.userSelect='';
-  }
+  if(valveDrag){endValveDrag();}
   if(multiDragStart){snapshot();multiDragStart=null;multiDragOffsets=[];}
   if(drag)drag=null;
   if(boxSelecting){
