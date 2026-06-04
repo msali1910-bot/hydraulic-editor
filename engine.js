@@ -224,20 +224,32 @@ const gPU=()=>_pUnit;const gFU=()=>_fUnit;
 function m2b(m){return m/10.2;}
 function pd(bar){
   const u=gPU();
-  if(u==='m')   return(bar*10.2).toFixed(2)+' m';
-  if(u==='psi') return(bar*14.504).toFixed(2)+' psi';
-  if(u==='kpa') return(bar*100).toFixed(1)+' kPa';
-  if(u==='mpa') return(bar/10).toFixed(4)+' MPa';
-  if(u==='atm') return(bar/1.01325).toFixed(3)+' atm';
+  if(u==='m')      return(bar*10.2).toFixed(2)+' m';
+  if(u==='kpa')    return(bar*100).toFixed(1)+' kPa';
+  if(u==='mpa')    return(bar/10).toFixed(4)+' MPa';
+  if(u==='psi')    return(bar*14.504).toFixed(2)+' psi';
+  if(u==='atm')    return(bar/1.01325).toFixed(3)+' atm';
+  if(u==='mmhg')   return(bar*750.06).toFixed(1)+' mmHg';
+  if(u==='kgfcm2') return(bar*1.0197).toFixed(3)+' kgf/cm²';
   return bar.toFixed(3)+' bar';
 }
-function pl(){const u=gPU();return u==='m'?'m':u==='psi'?'psi':u==='kpa'?'kPa':u==='mpa'?'MPa':u==='atm'?'atm':'bar';}
-function p2d(bar){const u=gPU();return u==='m'?+(bar*10.2).toFixed(2):u==='psi'?+(bar*14.504).toFixed(2):u==='kpa'?+(bar*100).toFixed(1):u==='mpa'?+(bar/10).toFixed(4):u==='atm'?+(bar/1.01325).toFixed(3):+bar.toFixed(3);}
-function d2p(v){const u=gPU();return u==='m'?v/10.2:u==='psi'?v/14.504:u==='kpa'?v/100:u==='mpa'?v*10:u==='atm'?v*1.01325:v;}
-function fd(ls){const u=gFU();return u==='lm'?(ls*60).toFixed(2)+' L/min':u==='m3h'?(ls*3.6).toFixed(3)+' m³/h':u==='gpm'?(ls*15.850).toFixed(2)+' gpm':u==='m3s'?ls.toFixed(5)+' m³/s':ls.toFixed(3)+' L/s';}
-function fl(){const u=gFU();return u==='lm'?'L/min':u==='m3h'?'m³/h':u==='gpm'?'gpm':u==='m3s'?'m³/s':'L/s';}
-function f2d(ls){const u=gFU();return u==='lm'?+(ls*60).toFixed(3):u==='m3h'?+(ls*3.6).toFixed(4):u==='gpm'?+(ls*15.850).toFixed(3):u==='m3s'?+ls.toFixed(5):+ls.toFixed(4);}
-function d2f(v){const u=gFU();return u==='lm'?v/60:u==='m3h'?v/3.6:u==='gpm'?v/15.850:u==='m3s'?v:v;}
+function pl(){const u=gPU();return u==='m'?'m':u==='kpa'?'kPa':u==='mpa'?'MPa':u==='psi'?'psi':u==='atm'?'atm':u==='mmhg'?'mmHg':u==='kgfcm2'?'kgf/cm²':'bar';}
+function p2d(bar){const u=gPU();return u==='m'?+(bar*10.2).toFixed(2):u==='kpa'?+(bar*100).toFixed(1):u==='mpa'?+(bar/10).toFixed(4):u==='psi'?+(bar*14.504).toFixed(2):u==='atm'?+(bar/1.01325).toFixed(3):u==='mmhg'?+(bar*750.06).toFixed(1):u==='kgfcm2'?+(bar*1.0197).toFixed(3):+bar.toFixed(3);}
+function d2p(v){const u=gPU();return u==='m'?v/10.2:u==='kpa'?v/100:u==='mpa'?v*10:u==='psi'?v/14.504:u==='atm'?v*1.01325:u==='mmhg'?v/750.06:u==='kgfcm2'?v/1.0197:v;}
+function fd(ls){
+  const u=gFU();
+  if(u==='lm')    return(ls*60).toFixed(2)+' L/min';
+  if(u==='m3h')   return(ls*3.6).toFixed(3)+' m³/h';
+  if(u==='m3s')   return ls.toFixed(5)+' m³/s';
+  if(u==='gpm')   return(ls*15.850).toFixed(2)+' GPM';
+  if(u==='gpmuk') return(ls*13.198).toFixed(2)+' GPM(UK)';
+  if(u==='mls')   return(ls*1000).toFixed(1)+' mL/s';
+  if(u==='cfm')   return(ls*2.1189).toFixed(3)+' ft³/min';
+  return ls.toFixed(3)+' L/s';
+}
+function fl(){const u=gFU();return u==='lm'?'L/min':u==='m3h'?'m³/h':u==='m3s'?'m³/s':u==='gpm'?'GPM':u==='gpmuk'?'GPM(UK)':u==='mls'?'mL/s':u==='cfm'?'ft³/min':'L/s';}
+function f2d(ls){const u=gFU();return u==='lm'?+(ls*60).toFixed(3):u==='m3h'?+(ls*3.6).toFixed(4):u==='m3s'?+ls.toFixed(5):u==='gpm'?+(ls*15.850).toFixed(3):u==='gpmuk'?+(ls*13.198).toFixed(3):u==='mls'?+(ls*1000).toFixed(2):u==='cfm'?+(ls*2.1189).toFixed(4):+ls.toFixed(4);}
+function d2f(v){const u=gFU();return u==='lm'?v/60:u==='m3h'?v/3.6:u==='m3s'?v:u==='gpm'?v/15.850:u==='gpmuk'?v/13.198:u==='mls'?v/1000:u==='cfm'?v/2.1189:v;}
 
 // ── IPC FU TABLE ───────────────────────────────────────────
 const FU_T=[[0,0],[1,.05],[2,.07],[4,.11],[6,.14],[10,.18],[20,.27],[30,.33],[50,.42],[100,.60],[200,.85],[500,1.38],[1000,1.95]];

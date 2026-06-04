@@ -409,58 +409,148 @@
 </div><!-- /app -->
 
 <!-- UNITS POPUP — outside app so it overlays everything -->
-<div id="units-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(0,0,0,.45);backdrop-filter:blur(4px)" onclick="if(event.target===this)closeUnits()">
-  <div id="units-box" onclick="event.stopPropagation()" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2,#fff);border:1px solid var(--brd,#dee2e6);border-radius:12px;width:460px;max-width:95vw;box-shadow:0 12px 40px rgba(0,0,0,.3);overflow:hidden;font-family:'Segoe UI',sans-serif">
+<div id="units-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(30,34,44,.55);backdrop-filter:blur(4px)" onclick="if(event.target===this)closeUnits()">
+  <div id="units-box" onclick="event.stopPropagation()" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:1px solid #e5e7eb;border-radius:14px;width:720px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:'Segoe UI',system-ui,sans-serif">
+
     <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--brd,#dee2e6);background:var(--bg3,#f8f9fa)">
-      <div style="font-size:13px;font-weight:700;color:var(--txt,#212529)">⚙ Unit Settings</div>
-      <button onclick="closeUnits()" style="border:none;background:transparent;font-size:20px;cursor:pointer;color:var(--txt3,#868e96);line-height:1;padding:0 4px;border-radius:4px;transition:background .1s" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">×</button>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:22px 24px 12px;border-bottom:1px solid #f0f1f3">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+          <div style="width:36px;height:36px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:18px">⚙️</div>
+          <span style="font-size:18px;font-weight:700;color:#111827">Unit Settings</span>
+        </div>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 0 46px">Select your preferred engineering units. All inputs and results will update automatically.</p>
+      </div>
+      <button onclick="closeUnits()" style="border:none;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:2px 6px;border-radius:6px;margin-top:-2px" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9ca3af'">×</button>
     </div>
-    <!-- Grid of options -->
-    <div style="padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px;background:var(--bg2,#fff)">
-      <div>
-        <div style="font-size:9px;font-weight:700;color:var(--txt3,#868e96);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:5px">
-          <span style="font-size:13px">🔽</span> Pressure
+
+    <!-- 6-section grid -->
+    <div style="padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+
+      <!-- PRESSURE -->
+      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;border-radius:6px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:14px">🔵</div>
+            <span style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.06em">Pressure</span>
+          </div>
         </div>
-        <label class="uopt"><input type="radio" name="punit" value="m" checked> m (metre head)</label>
-        <label class="uopt"><input type="radio" name="punit" value="bar"> bar</label>
-        <label class="uopt"><input type="radio" name="punit" value="kpa"> kPa</label>
-        <label class="uopt"><input type="radio" name="punit" value="psi"> psi</label>
-        <label class="uopt"><input type="radio" name="punit" value="mpa"> MPa</label>
-        <label class="uopt"><input type="radio" name="punit" value="atm"> atm</label>
-      </div>
-      <div>
-        <div style="font-size:9px;font-weight:700;color:var(--txt3,#868e96);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:5px">
-          <span style="font-size:13px">🔽</span> Flow Rate
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+          <label class="uopt"><input type="radio" name="punit" value="m" checked> m</label>
+          <label class="uopt"><input type="radio" name="punit" value="bar"> bar</label>
+          <label class="uopt"><input type="radio" name="punit" value="kpa"> kPa</label>
+          <label class="uopt"><input type="radio" name="punit" value="mpa"> MPa</label>
+          <label class="uopt"><input type="radio" name="punit" value="psi"> psi</label>
+          <label class="uopt"><input type="radio" name="punit" value="atm"> atm</label>
+          <label class="uopt"><input type="radio" name="punit" value="mmhg"> mmHg</label>
+          <label class="uopt"><input type="radio" name="punit" value="kgfcm2"> kgf/cm²</label>
         </div>
-        <label class="uopt"><input type="radio" name="funit" value="ls" checked> L/s</label>
-        <label class="uopt"><input type="radio" name="funit" value="lm"> L/min</label>
-        <label class="uopt"><input type="radio" name="funit" value="m3h"> m³/h</label>
-        <label class="uopt"><input type="radio" name="funit" value="gpm"> gpm (US)</label>
-        <label class="uopt"><input type="radio" name="funit" value="m3s"> m³/s</label>
       </div>
-      <div>
-        <div style="font-size:9px;font-weight:700;color:var(--txt3,#868e96);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:5px">
-          <span style="font-size:13px">🔽</span> Power
+
+      <!-- FLOW RATE -->
+      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;border-radius:6px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:14px">〰️</div>
+            <span style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.06em">Flow Rate</span>
+          </div>
         </div>
-        <label class="uopt"><input type="radio" name="powunit" value="kw" checked> kW</label>
-        <label class="uopt"><input type="radio" name="powunit" value="hp"> hp</label>
-        <label class="uopt"><input type="radio" name="powunit" value="w"> W</label>
-      </div>
-      <div>
-        <div style="font-size:9px;font-weight:700;color:var(--txt3,#868e96);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:5px">
-          <span style="font-size:13px">🔽</span> Length
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+          <label class="uopt"><input type="radio" name="funit" value="ls" checked> L/s</label>
+          <label class="uopt"><input type="radio" name="funit" value="lm"> L/min</label>
+          <label class="uopt"><input type="radio" name="funit" value="m3h"> m³/h</label>
+          <label class="uopt"><input type="radio" name="funit" value="m3s"> m³/s</label>
+          <label class="uopt"><input type="radio" name="funit" value="gpm"> GPM (US)</label>
+          <label class="uopt"><input type="radio" name="funit" value="gpmuk"> GPM (UK)</label>
+          <label class="uopt"><input type="radio" name="funit" value="mls"> mL/s</label>
+          <label class="uopt"><input type="radio" name="funit" value="cfm"> ft³/min</label>
         </div>
-        <label class="uopt"><input type="radio" name="lenunit" value="m" checked> m</label>
-        <label class="uopt"><input type="radio" name="lenunit" value="ft"> ft</label>
-        <label class="uopt"><input type="radio" name="lenunit" value="mm"> mm</label>
       </div>
-    </div>
+
+      <!-- POWER -->
+      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;border-radius:6px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:14px">⚡</div>
+            <span style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.06em">Power</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+          <label class="uopt"><input type="radio" name="powunit" value="kw" checked> kW</label>
+          <label class="uopt"><input type="radio" name="powunit" value="w"> W</label>
+          <label class="uopt"><input type="radio" name="powunit" value="mw"> MW</label>
+          <label class="uopt"><input type="radio" name="powunit" value="hp"> hp</label>
+          <label class="uopt"><input type="radio" name="powunit" value="btuh"> BTU/h</label>
+          <label class="uopt"><input type="radio" name="powunit" value="kcalh"> kcal/h</label>
+        </div>
+      </div>
+
+      <!-- LENGTH -->
+      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;border-radius:6px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:14px">📏</div>
+            <span style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.06em">Length</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+          <label class="uopt"><input type="radio" name="lenunit" value="m" checked> m</label>
+          <label class="uopt"><input type="radio" name="lenunit" value="mm"> mm</label>
+          <label class="uopt"><input type="radio" name="lenunit" value="cm"> cm</label>
+          <label class="uopt"><input type="radio" name="lenunit" value="ft"> ft</label>
+          <label class="uopt"><input type="radio" name="lenunit" value="in"> in</label>
+          <label class="uopt"><input type="radio" name="lenunit" value="yd"> yd</label>
+        </div>
+      </div>
+
+      <!-- VOLUME -->
+      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;border-radius:6px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:14px">🧊</div>
+            <span style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.06em">Volume</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+          <label class="uopt"><input type="radio" name="volunit" value="m3" checked> m³</label>
+          <label class="uopt"><input type="radio" name="volunit" value="l"> L</label>
+          <label class="uopt"><input type="radio" name="volunit" value="ml"> mL</label>
+          <label class="uopt"><input type="radio" name="volunit" value="ft3"> ft³</label>
+          <label class="uopt"><input type="radio" name="volunit" value="usgal"> US gal</label>
+          <label class="uopt"><input type="radio" name="volunit" value="ukgal"> UK gal</label>
+        </div>
+      </div>
+
+      <!-- TEMPERATURE -->
+      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;border-radius:6px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:14px">🌡️</div>
+            <span style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.06em">Temperature</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+          <label class="uopt"><input type="radio" name="tmpunit" value="c" checked> °C</label>
+          <label class="uopt"><input type="radio" name="tmpunit" value="k"> K</label>
+          <label class="uopt"><input type="radio" name="tmpunit" value="f"> °F</label>
+          <label class="uopt"><input type="radio" name="tmpunit" value="r"> °R</label>
+        </div>
+      </div>
+
+    </div><!-- /grid -->
+
     <!-- Footer -->
-    <div style="padding:12px 18px;border-top:1px solid var(--brd,#dee2e6);background:var(--bg3,#f8f9fa);display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:10px;color:var(--txt3,#868e96)">Changes apply to all inputs and results</span>
-      <button onclick="applyUnitsFromPopup()" style="padding:7px 22px;font-size:12px;font-weight:700;background:#1971c2;color:#fff;border:none;border-radius:6px;cursor:pointer;transition:background .12s" onmouseover="this.style.background='#1864ab'" onmouseout="this.style.background='#1971c2'">Apply</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-top:1px solid #f0f1f3">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:20px;height:20px;border-radius:50%;background:#eff6ff;border:1.5px solid #93c5fd;display:flex;align-items:center;justify-content:center;font-size:11px;color:#1971c2;font-weight:700;flex-shrink:0">i</div>
+        <span style="font-size:11px;color:#6b7280">Changes apply to all inputs and results</span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeUnits()" style="padding:8px 22px;font-size:12px;font-weight:600;background:#fff;color:#374151;border:1.5px solid #d1d5db;border-radius:8px;cursor:pointer;transition:all .12s" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='#fff'">Cancel</button>
+        <button onclick="applyUnitsFromPopup()" style="padding:8px 28px;font-size:12px;font-weight:700;background:#1971c2;color:#fff;border:1.5px solid #1971c2;border-radius:8px;cursor:pointer;transition:background .12s" onmouseover="this.style.background='#1864ab'" onmouseout="this.style.background='#1971c2'">Apply</button>
+      </div>
     </div>
+
   </div>
 </div>
 

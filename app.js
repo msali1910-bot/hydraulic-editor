@@ -38,12 +38,12 @@ document.getElementById('bdark').onclick=()=>{
 };
 
 // ── UNITS SYSTEM ──────────────────────────────────────────
-let _powUnit='kw', _lenUnit='m';
+let _powUnit='kw', _lenUnit='m', _volUnit='m3', _tmpUnit='c';
 
 function openUnits(){
   // Sync radios to current state
-  ['punit','funit','powunit','lenunit'].forEach(name=>{
-    const curVal={punit:_pUnit,funit:_fUnit,powunit:_powUnit,lenunit:_lenUnit}[name]||'m';
+  ['punit','funit','powunit','lenunit','volunit','tmpunit'].forEach(name=>{
+    const curVal={punit:_pUnit,funit:_fUnit,powunit:_powUnit,lenunit:_lenUnit,volunit:_volUnit,tmpunit:_tmpUnit}[name]||'m';
     const el=document.querySelector(`input[name="${name}"][value="${curVal}"]`);
     if(el)el.checked=true;
   });
@@ -59,6 +59,8 @@ function applyUnitsFromPopup(){
   _fUnit  = document.querySelector('input[name="funit"]:checked')?.value   || 'ls';
   _powUnit= document.querySelector('input[name="powunit"]:checked')?.value || 'kw';
   _lenUnit= document.querySelector('input[name="lenunit"]:checked')?.value || 'm';
+  _volUnit= document.querySelector('input[name="volunit"]:checked')?.value || 'm3';
+  _tmpUnit= document.querySelector('input[name="tmpunit"]:checked')?.value || 'c';
   closeUnits();
   if(sel)showProp(sel);
   scheduleDraw();
@@ -381,12 +383,16 @@ cv.addEventListener('mousedown',e=>{
   if(mode==='sel'){
     const v=hitValve(sx,sy);
     if(v){
-      if(e.shiftKey){selSet.has(v)?selSet.delete(v):selSet.add(v);sel=v;showProp(v);scheduleDraw();}
-      else{
-        selSet.clear();selItem(v);
-        // Start drag along pipe
+      e.preventDefault(); // stop browser native drag
+      e.stopPropagation();
+      selSet.clear();selItem(v);
+      if(!e.shiftKey){
         const pipe=v._pipe||pipes.find(p=>p.valve===v);
-        if(pipe)valveDrag={valve:v,pipe};
+        if(pipe){
+          valveDrag={valve:v,pipe,startT:v.t||0.5};
+          cv.style.cursor='ew-resize';
+          document.body.style.userSelect='none';
+        }
       }
       return;
     }
@@ -420,9 +426,14 @@ cv.addEventListener('mousedown',e=>{
 });
 
 // mouseup on DOCUMENT so releasing outside canvas still stops drag
-document.addEventListener('mouseup',()=>{
-  if(isPanning){isPanning=false;cv.style.cursor=mode==='sel'?'default':'crosshair';}
-  if(valveDrag){snapshot();valveDrag=null;cv.style.cursor='default';}
+document.addEventListener('mouseup',e=>{
+  if(isPanning){isPanning=false;cv.style.cursor='default';}
+  if(valveDrag){
+    snapshot();
+    valveDrag=null;
+    cv.style.cursor='default';
+    document.body.style.userSelect='';
+  }
   if(multiDragStart){snapshot();multiDragStart=null;multiDragOffsets=[];}
   if(drag)drag=null;
   if(boxSelecting){
@@ -437,7 +448,11 @@ document.addEventListener('mouseup',()=>{
   }
 });
 
-// ── LIBRARY DRAG & DROP ───────────────────────────────────
+// Prevent browser native drag on canvas (interferes with valve drag)
+cv.addEventListener('dragstart', e=>e.preventDefault());
+document.addEventListener('selectstart', e=>{
+  if(valveDrag||drag||multiDragStart)e.preventDefault();
+});
 let ld=null;
 document.querySelectorAll('.li').forEach(el=>{
   el.addEventListener('dragstart',e=>{ld=el.dataset.type;e.dataTransfer.effectAllowed='copy';});
